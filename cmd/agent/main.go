@@ -1,3 +1,45 @@
 package main
 
-func main() {}
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/vrnvgasu/metrics/internal/agent"
+)
+
+const (
+	intervalCollect = 2
+	intervalSend    = 10
+)
+
+func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	agentClient := agent.NewAgent(&http.Client{})
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	errGroup, runtimeCtx := errgroup.WithContext(ctx)
+
+	errGroup.Go(func() error {
+		return agentClient.Collect(runtimeCtx, intervalCollect)
+	})
+	errGroup.Go(func() error {
+		return agentClient.SendMetrics(runtimeCtx, intervalSend)
+	})
+
+	if err := errGroup.Wait(); err != nil {
+		return err
+	}
+
+	return nil
+}

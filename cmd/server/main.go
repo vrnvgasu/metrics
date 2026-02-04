@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/vrnvgasu/metrics/internal/handler/server"
+	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
@@ -15,10 +15,11 @@ func main() {
 }
 
 func run() error {
-	repository.Storage = repository.NewMemStorage()
+	storage := repository.NewMemStorage()
+	h := handler.NewHandler(storage)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", server.Update)
+	mux.HandleFunc("/update/", h.Update)
 
 	return http.ListenAndServe(":8080", mux)
 }

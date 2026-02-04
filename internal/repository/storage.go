@@ -1,8 +1,10 @@
 package repository
 
-import models "github.com/vrnvgasu/metrics/internal/model"
+import (
+	"fmt"
 
-var Storage *MemStorage
+	models "github.com/vrnvgasu/metrics/internal/model"
+)
 
 type MemStorage struct {
 	Metrics map[string]models.Metrics
@@ -18,11 +20,15 @@ func (ms *MemStorage) Add(m models.Metrics) error {
 	switch m.MType {
 	case models.Gauge:
 		ms.addGauge(m)
+
+		return nil
 	case models.Counter:
 		ms.addCounter(m)
-	}
 
-	return nil
+		return nil
+	default:
+		return fmt.Errorf("metrics type %s not supported", m.MType)
+	}
 }
 
 func (ms *MemStorage) addGauge(m models.Metrics) {
@@ -37,7 +43,9 @@ func (ms *MemStorage) addCounter(m models.Metrics) {
 		return
 	}
 
-	oldValue := *oldM.Value
-	oldValue += *m.Value
-	oldM.Value = &oldValue
+	oldDelta := *oldM.Delta
+	oldDelta += *m.Delta
+	oldM.Delta = &oldDelta
+
+	ms.Metrics[m.ID] = oldM
 }

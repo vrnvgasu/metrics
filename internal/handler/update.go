@@ -1,24 +1,25 @@
-package server
+package handler
 
 import (
 	"net/http"
 	"strings"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
-func Update(res http.ResponseWriter, req *http.Request) {
-	//if req.Method != http.MethodPost {
-	//	http.Error(res, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-	//
-	//	return
-	//}
-	//if !strings.Contains(req.Header.Get("Content-Type"), "text/plain") {
-	//	http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-	//
-	//	return
-	//}
+func (h *Handler) Update(res http.ResponseWriter, req *http.Request) {
+	res.Header().Add("Content-Type", "text/plain")
+
+	if req.Method != http.MethodPost {
+		http.Error(res, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+
+		return
+	}
+	if !strings.Contains(req.Header.Get("Content-Type"), "text/plain") {
+		http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
+
+		return
+	}
 
 	path := strings.TrimPrefix(req.URL.Path, "/update/")
 	values := strings.Split(path, "/")
@@ -35,12 +36,11 @@ func Update(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err = repository.Storage.Add(metric); err != nil {
+	if err = h.Storage.Add(metric); err != nil {
 		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 		return
 	}
 
-	res.Header().Add("Content-Type", "text/plain")
 	res.WriteHeader(http.StatusOK)
 }

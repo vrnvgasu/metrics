@@ -30,10 +30,10 @@ func NewMetricsFromStrings(mType, ID, value string) (Metrics, error) {
 		Hash: "",
 	}
 	if err := m.setTypeFromString(mType); err != nil {
-		return *m, fmt.Errorf("model: unable to set metrics type: %w", err)
+		return Metrics{}, fmt.Errorf("model: unable to set metrics type: %w", err)
 	}
 	if err := m.setValueFromString(value); err != nil {
-		return *m, fmt.Errorf("model: unable to set metrics value: %w", err)
+		return Metrics{}, fmt.Errorf("model: unable to set metrics value: %w", err)
 	}
 
 	return *m, nil
@@ -55,20 +55,33 @@ func (m *Metrics) setTypeFromString(v string) error {
 func (m *Metrics) setValueFromString(v string) error {
 	switch m.MType {
 	case Counter:
-		value, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			return fmt.Errorf("invalid metric value: %w", err)
-		}
-		m.Value = &value
-		return nil
-	case Gauge:
 		delta, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return fmt.Errorf("invalid metric delta: %w", err)
 		}
 		m.Delta = &delta
+
+		return nil
+	case Gauge:
+		value, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return fmt.Errorf("invalid metric value: %w", err)
+		}
+		m.Value = &value
+
 		return nil
 	default:
-		return nil
+		return fmt.Errorf("invalid metric type: %s", m.MType)
+	}
+}
+
+func (m *Metrics) ValueToString() string {
+	switch m.MType {
+	case Counter:
+		return fmt.Sprintf("%d", *m.Delta)
+	case Gauge:
+		return fmt.Sprintf("%f", *m.Value)
+	default:
+		return ""
 	}
 }
