@@ -74,7 +74,7 @@ func TestUpdate(t *testing.T) {
 			method:              http.MethodPatch,
 			path:                "/update/gauge/test/1",
 			contentType:         "text/plain",
-			expectedStatus:      http.StatusMethodNotAllowed,
+			expectedStatus:      http.StatusNotFound,
 			expectedContentType: "text/plain",
 		},
 		{
@@ -139,7 +139,7 @@ func TestUpdate(t *testing.T) {
 			method:              http.MethodPatch,
 			path:                "/update/counter/test/1",
 			contentType:         "text/plain",
-			expectedStatus:      http.StatusMethodNotAllowed,
+			expectedStatus:      http.StatusNotFound,
 			expectedContentType: "text/plain",
 		},
 		{
@@ -162,7 +162,9 @@ func TestUpdate(t *testing.T) {
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			request.Header.Add("Content-Type", tt.contentType)
 			w := httptest.NewRecorder()
-			h.Update(w, request)
+
+			NewRouter(h).ServeHTTP(w, request)
+
 			res := w.Result()
 			res.Body.Close()
 			assert.Equal(t, tt.expectedStatus, res.StatusCode)

@@ -4,43 +4,43 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
-func (h *Handler) Update(res http.ResponseWriter, req *http.Request) {
-	res.Header().Add("Content-Type", "text/plain")
+type UpdateRequest struct {
+	MType string `uri:"mtype" binding:"required"`
+	Name  string `uri:"name" binding:"required"`
+	Value string `uri:"value" binding:"required"`
+}
 
-	if req.Method != http.MethodPost {
-		http.Error(res, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+func (h *Handler) Update(c *gin.Context) {
+	c.Writer.Header().Add("Content-Type", "text/plain")
 
-		return
-	}
-	if !strings.Contains(req.Header.Get("Content-Type"), "text/plain") {
-		http.Error(res, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-
-		return
-	}
-
-	path := strings.TrimPrefix(req.URL.Path, "/update/")
-	values := strings.Split(path, "/")
-	if len(values) != 3 {
-		http.Error(res, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	if !strings.Contains(c.Request.Header.Get("Content-Type"), "text/plain") {
+		http.Error(c.Writer, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
 
 		return
 	}
 
-	metric, err := models.NewMetricsFromStrings(values[0], values[1], values[2])
+	var req UpdateRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		http.Error(c.Writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+
+	metric, err := models.NewMetricsFromStrings(req.MType, req.Name, req.Value)
 	if err != nil {
-		http.Error(res, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		http.Error(c.Writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 
 		return
 	}
 
 	if err = h.Storage.Add(metric); err != nil {
-		http.Error(res, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(c.Writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
+	c.Writer.WriteHeader(http.StatusOK)
 }

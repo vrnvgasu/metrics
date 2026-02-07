@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/repository"
@@ -17,9 +17,10 @@ func main() {
 func run() error {
 	storage := repository.NewMemStorage()
 	h := handler.NewHandler(storage)
+	server := handler.NewServer(handler.NewRouter(h))
+	if err := server.Run(); err != nil {
+		return fmt.Errorf("could not start server: %w", err)
+	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", h.Update)
-
-	return http.ListenAndServe(":8080", mux)
+	return nil
 }

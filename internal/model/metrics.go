@@ -23,6 +23,8 @@ type Metrics struct {
 	Hash  string   `json:"hash,omitempty"`
 }
 
+type MetricsMap map[string]Metrics
+
 func NewMetricsFromStrings(mType, ID, value string) (Metrics, error) {
 
 	m := &Metrics{

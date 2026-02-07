@@ -118,13 +118,13 @@ func TestMemStorageAdd(t *testing.T) {
 			t.Parallel()
 
 			s := &MemStorage{
-				Metrics: tt.metrics,
+				metrics: tt.metrics,
 			}
 
 			err := s.Add(tt.m)
 			tt.expectedErr(t, err)
 			for k, v := range tt.expectedMetrics {
-				m, ok := s.Metrics[k]
+				m, ok := s.metrics[k]
 				require.True(t, ok)
 				require.Equal(t, v, m)
 			}
