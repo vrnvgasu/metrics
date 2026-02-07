@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -17,12 +16,6 @@ type UpdateRequest struct {
 
 func (h *Handler) Update(c *gin.Context) {
 	c.Writer.Header().Add("Content-Type", "text/plain")
-
-	if !strings.Contains(c.Request.Header.Get("Content-Type"), "text/plain") {
-		http.Error(c.Writer, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-
-		return
-	}
 
 	var req UpdateRequest
 	if err := c.ShouldBindUri(&req); err != nil {

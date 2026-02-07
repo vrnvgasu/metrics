@@ -82,7 +82,7 @@ func (m *Metrics) ValueToString() string {
 	case Counter:
 		return fmt.Sprintf("%d", *m.Delta)
 	case Gauge:
-		return fmt.Sprintf("%f", *m.Value)
+		return strconv.FormatFloat(*m.Value, 'f', -1, 64)
 	default:
 		return ""
 	}

@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -17,12 +16,6 @@ type FindRequest struct {
 
 func (h *Handler) Find(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "text/plain")
-
-	if !strings.Contains(c.Request.Header.Get("Content-Type"), "text/plain") {
-		http.Error(c.Writer, http.StatusText(http.StatusUnsupportedMediaType), http.StatusUnsupportedMediaType)
-
-		return
-	}
 
 	var req FindRequest
 	if err := c.ShouldBindUri(&req); err != nil {

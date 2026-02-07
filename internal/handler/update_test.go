@@ -77,14 +77,6 @@ func TestUpdate(t *testing.T) {
 			expectedStatus:      http.StatusNotFound,
 			expectedContentType: "text/plain",
 		},
-		{
-			name:                "failed: gauge wrong content type",
-			method:              http.MethodPost,
-			path:                "/update/gauge/test/1",
-			contentType:         "application/json",
-			expectedStatus:      http.StatusUnsupportedMediaType,
-			expectedContentType: "text/plain",
-		},
 
 		{
 			name:                "success: counter 0",
@@ -140,14 +132,6 @@ func TestUpdate(t *testing.T) {
 			path:                "/update/counter/test/1",
 			contentType:         "text/plain",
 			expectedStatus:      http.StatusNotFound,
-			expectedContentType: "text/plain",
-		},
-		{
-			name:                "failed: counter wrong content type",
-			method:              http.MethodPost,
-			path:                "/update/counter/test/1",
-			contentType:         "application/json",
-			expectedStatus:      http.StatusUnsupportedMediaType,
 			expectedContentType: "text/plain",
 		},
 	}

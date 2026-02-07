@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +21,7 @@ func TestFind(t *testing.T) {
 	err := s.Add(models.Metrics{
 		ID:    "1",
 		MType: models.Gauge,
-		Value: helper.NewRefFloat64(11.1),
+		Value: helper.NewRefFloat64(842315.916000),
 	})
 	require.NoError(t, err)
 	err = s.Add(models.Metrics{
@@ -46,7 +47,7 @@ func TestFind(t *testing.T) {
 			contentType:         "text/plain",
 			expectedStatus:      http.StatusOK,
 			expectedContentType: "text/plain",
-			expectedValue:       "11.1",
+			expectedValue:       "842315.916",
 		},
 		{
 			name:                "Find counter",
@@ -84,15 +85,6 @@ func TestFind(t *testing.T) {
 			expectedContentType: "text/plain",
 			expectedValue:       "",
 		},
-		{
-			name:                "Bad content type",
-			method:              http.MethodGet,
-			path:                "/value/gauge/1",
-			contentType:         "json",
-			expectedStatus:      http.StatusUnsupportedMediaType,
-			expectedContentType: "text/plain",
-			expectedValue:       "",
-		},
 	}
 
 	for _, tt := range tests {
@@ -110,9 +102,15 @@ func TestFind(t *testing.T) {
 			NewRouter(h).ServeHTTP(w, request)
 
 			res := w.Result()
-			res.Body.Close()
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
 			assert.Equal(t, tt.expectedStatus, res.StatusCode)
 			assert.Contains(t, res.Header.Get("Content-Type"), tt.expectedContentType)
+			if tt.expectedValue != "" {
+				assert.Equal(t, tt.expectedValue, string(body))
+			}
 		})
 	}
 }
