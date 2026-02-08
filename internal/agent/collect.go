@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
@@ -119,8 +120,6 @@ const (
 	totalAlloc = "TotalAlloc"
 )
 
-const ()
-
 var gaugesMemStatNames = []string{
 	alloc,
 	buckHashSys,
@@ -156,7 +155,7 @@ const (
 	randomValue = "RandomValue"
 )
 
-func (a *Agent) Collect(ctx context.Context, interval time.Duration) error {
+func (a *Agent) Collect(ctx context.Context, cnf *config.AgentCnf) error {
 	var memStats runtime.MemStats
 
 	for {
@@ -172,7 +171,7 @@ func (a *Agent) Collect(ctx context.Context, interval time.Duration) error {
 		a.addStatsMetric(memStats)
 		a.addRandomValue()
 
-		time.Sleep(interval * time.Second)
+		time.Sleep(time.Duration(cnf.PollInterval) * time.Second)
 	}
 }
 

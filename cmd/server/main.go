@@ -15,9 +15,11 @@ func main() {
 }
 
 func run() error {
+	cnf := parseFlags()
+
 	storage := repository.NewMemStorage()
 	h := handler.NewHandler(storage)
-	server := handler.NewServer(handler.NewRouter(h))
+	server := handler.NewServer(handler.NewRouter(h), cnf)
 	if err := server.Run(); err != nil {
 		return fmt.Errorf("could not start server: %w", err)
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
@@ -97,7 +98,7 @@ func TestCollect(t *testing.T) {
 	a := NewAgent(nil)
 	require.Equal(t, 0, a.Metrics.Len())
 
-	err := a.Collect(ctx, 1)
+	err := a.Collect(ctx, &config.AgentCnf{PollInterval: 1})
 	require.NoError(t, err)
 	require.Equal(t, len(gaugesMemStatNames)+1+1, a.Metrics.Len())
 }

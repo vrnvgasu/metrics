@@ -7,14 +7,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
 const (
-	path = "http://localhost:8080/update"
+	path = "update"
 )
 
-func (a *Agent) SendMetrics(ctx context.Context, interval time.Duration) error {
+func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -28,16 +29,16 @@ func (a *Agent) SendMetrics(ctx context.Context, interval time.Duration) error {
 				break
 			}
 
-			if err := a.SendMetric(*m); err != nil {
+			if err := a.SendMetric(*m, cnf.Address); err != nil {
 				return fmt.Errorf("sending metric: %w", err)
 			}
 		}
-		time.Sleep(interval * time.Second)
+		time.Sleep(time.Duration(cnf.ReportInterval) * time.Second)
 	}
 }
 
-func (a *Agent) SendMetric(m models.Metrics) error {
-	url := fmt.Sprintf("%s/%s/%s/%s", path, m.MType, m.ID, m.ValueToString())
+func (a *Agent) SendMetric(m models.Metrics, address string) error {
+	url := fmt.Sprintf("http://%s/%s/%s/%s/%s", address, path, m.MType, m.ID, m.ValueToString())
 	resp, err := a.Client.Post(url, "text/plain", http.NoBody)
 	if err != nil {
 		return fmt.Errorf("sending metric: %w", err)

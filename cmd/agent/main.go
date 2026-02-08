@@ -12,11 +12,6 @@ import (
 	"github.com/vrnvgasu/metrics/internal/agent"
 )
 
-const (
-	intervalCollect = 2
-	intervalSend    = 10
-)
-
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -24,6 +19,8 @@ func main() {
 }
 
 func run() error {
+	cnf := parseFlags()
+
 	agentClient := agent.NewAgent(&http.Client{})
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
@@ -31,10 +28,10 @@ func run() error {
 	errGroup, runtimeCtx := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
-		return agentClient.Collect(runtimeCtx, intervalCollect)
+		return agentClient.Collect(runtimeCtx, cnf)
 	})
 	errGroup.Go(func() error {
-		return agentClient.SendMetrics(runtimeCtx, intervalSend)
+		return agentClient.SendMetrics(runtimeCtx, cnf)
 	})
 
 	if err := errGroup.Wait(); err != nil {
