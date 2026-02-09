@@ -16,16 +16,20 @@ import (
 func Test_addPollCount(t *testing.T) {
 	t.Parallel()
 
-	a := NewAgent(nil)
-	require.Equal(t, a.Metrics.Len(), 0)
+	a := NewAgent(nil, 100)
+	require.Equal(t, len(a.Metrics), 0)
 
 	a.addPollCount()
-	require.Equal(t, a.Metrics.Len(), 1)
-	element := a.Metrics.Front()
-	require.NotNil(t, element)
+	require.Equal(t, len(a.Metrics), 1)
+
+	var m models.Metrics
+	select {
+	case m = <-a.Metrics:
+	default:
+		t.Error("metrics channel closed")
+	}
 
 	var delta int64 = 1
-	m := element.Value.(models.Metrics)
 	require.Equal(t, models.Metrics{
 		ID:    pollCount,
 		MType: models.Counter,
@@ -39,15 +43,19 @@ func Test_addPollCount(t *testing.T) {
 func Test_addRandomValue(t *testing.T) {
 	t.Parallel()
 
-	a := NewAgent(nil)
-	require.Equal(t, a.Metrics.Len(), 0)
+	a := NewAgent(nil, 100)
+	require.Equal(t, len(a.Metrics), 0)
 
 	a.addRandomValue()
-	require.Equal(t, a.Metrics.Len(), 1)
-	element := a.Metrics.Front()
-	require.NotNil(t, element)
+	require.Equal(t, len(a.Metrics), 1)
 
-	mActual := element.Value.(models.Metrics)
+	var mActual models.Metrics
+	select {
+	case mActual = <-a.Metrics:
+	default:
+		t.Error("metrics channel closed")
+	}
+
 	require.Equal(t, randomValue, mActual.ID)
 	require.Equal(t, models.Gauge, mActual.MType)
 	require.NotNil(t, mActual.Value)
@@ -58,19 +66,23 @@ func Test_addStatsMetric(t *testing.T) {
 	t.Parallel()
 
 	var memStats runtime.MemStats
-	a := NewAgent(nil)
-	require.Equal(t, a.Metrics.Len(), 0)
+	a := NewAgent(nil, 100)
+	require.Equal(t, 0, len(a.Metrics))
 
 	a.addStatsMetric(memStats)
-	require.Equal(t, len(gaugesMemStatNames), a.Metrics.Len())
+	require.Equal(t, len(gaugesMemStatNames), len(a.Metrics))
 
-	actualNames := make(map[string]struct{}, a.Metrics.Len())
+	actualNames := make(map[string]struct{}, len(a.Metrics))
+
+loop:
 	for {
-		el := a.Metrics.Front()
-		if el == nil {
-			break
+		var m models.Metrics
+		select {
+		case m = <-a.Metrics:
+		default:
+			break loop
 		}
-		m := el.Value.(models.Metrics)
+
 		var existInList bool
 		for _, name := range gaugesMemStatNames {
 			if name == m.ID {
@@ -85,9 +97,7 @@ func Test_addStatsMetric(t *testing.T) {
 			}
 		}
 
-		a.Metrics.Remove(el)
-
-		require.True(t, existInList)
+		require.True(t, existInList, fmt.Sprintf("metric.ID [%s] is not exist in gauges stat names", m.ID))
 	}
 }
 
@@ -95,10 +105,10 @@ func TestCollect(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	a := NewAgent(nil)
-	require.Equal(t, 0, a.Metrics.Len())
+	a := NewAgent(nil, 100)
+	require.Equal(t, 0, len(a.Metrics))
 
 	err := a.Collect(ctx, &config.AgentCnf{PollInterval: 1})
 	require.NoError(t, err)
-	require.Equal(t, len(gaugesMemStatNames)+1+1, a.Metrics.Len())
+	require.Equal(t, len(gaugesMemStatNames)+1+1, len(a.Metrics))
 }

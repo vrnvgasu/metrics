@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"golang.org/x/sync/errgroup"
 
@@ -21,8 +22,10 @@ func main() {
 func run() error {
 	cnf := parseFlags()
 
-	agentClient := agent.NewAgent(&http.Client{})
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	bufSize := cnf.ReportInterval / cnf.PollInterval * 100
+
+	agentClient := agent.NewAgent(&http.Client{}, bufSize)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	errGroup, runtimeCtx := errgroup.WithContext(ctx)

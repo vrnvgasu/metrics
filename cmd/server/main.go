@@ -1,8 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/repository"
@@ -17,11 +24,34 @@ func main() {
 func run() error {
 	cnf := parseFlags()
 
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
 	storage := repository.NewMemStorage()
 	h := handler.NewHandler(storage)
 	server := handler.NewServer(handler.NewRouter(h), cnf)
-	if err := server.Run(); err != nil {
-		return fmt.Errorf("could not start server: %w", err)
+
+	serverErr := make(chan error)
+
+	go func() {
+		log.Println("starting server on: ", cnf.Address)
+		if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Println("shutting down server")
+	case err := <-serverErr:
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("server shutdown error: %w", err)
 	}
 
 	return nil

@@ -8,9 +8,9 @@ import (
 )
 
 func (h *Handler) List(c *gin.Context) {
-	mMap := h.Storage.Map()
-	items := make([]string, 0, len(mMap))
-	for _, m := range mMap {
+	list := h.Storage.List()
+	items := make([]string, 0, len(list))
+	for _, m := range list {
 		items = append(items, fmt.Sprintf("%s: %s", m.ID, m.ValueToString()))
 	}
 

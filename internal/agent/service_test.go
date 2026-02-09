@@ -95,13 +95,13 @@ func TestAgent_pollMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			a := NewAgent(nil)
+			a := NewAgent(nil, 100)
 			for _, m := range tt.metric {
-				a.Metrics.PushBack(m)
+				a.Metrics <- m
 			}
 
 			require.Equal(t, tt.expectedMetric, a.pollMetric())
-			require.Equal(t, tt.expectedRemainingLength, a.Metrics.Len())
+			require.Equal(t, tt.expectedRemainingLength, len(a.Metrics))
 		})
 	}
 }
@@ -135,12 +135,12 @@ func TestAgent_pushMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			a := NewAgent(nil)
+			a := NewAgent(nil, 100)
 			for _, m := range tt.metric {
 				a.pushMetric(m)
 			}
 
-			require.Equal(t, a.Metrics.Len(), tt.expectedLength)
+			require.Equal(t, len(a.Metrics), tt.expectedLength)
 		})
 	}
 }

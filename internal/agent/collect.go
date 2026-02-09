@@ -196,7 +196,12 @@ func (a *Agent) addRandomValue() {
 
 func (a *Agent) addStatsMetric(memStats runtime.MemStats) {
 	for _, name := range gaugesMemStatNames {
-		value := a.getMemStatsMetric(name, memStats)
+		f, ok := gaugeMemStats[name]
+		if !ok {
+			continue
+		}
+
+		value := f(memStats)
 		a.pushMetric(models.Metrics{
 			ID:    name,
 			MType: models.Gauge,
@@ -205,63 +210,34 @@ func (a *Agent) addStatsMetric(memStats runtime.MemStats) {
 	}
 }
 
-func (a *Agent) getMemStatsMetric(metricName string, memStats runtime.MemStats) float64 {
-	switch metricName {
-	case alloc:
-		return float64(memStats.Alloc)
-	case buckHashSys:
-		return float64(memStats.BuckHashSys)
-	case frees:
-		return float64(memStats.Frees)
-	case gCCPUFraction:
-		return memStats.GCCPUFraction
-	case gCSys:
-		return float64(memStats.GCSys)
-	case heapAlloc:
-		return float64(memStats.HeapAlloc)
-	case heapIdle:
-		return float64(memStats.HeapIdle)
-	case heapInuse:
-		return float64(memStats.HeapInuse)
-	case heapObjects:
-		return float64(memStats.HeapObjects)
-	case heapReleased:
-		return float64(memStats.HeapReleased)
-	case heapSys:
-		return float64(memStats.HeapSys)
-	case lastGC:
-		return float64(memStats.LastGC)
-	case lookups:
-		return float64(memStats.Lookups)
-	case mCacheInuse:
-		return float64(memStats.MCacheInuse)
-	case mCacheSys:
-		return float64(memStats.MCacheSys)
-	case mSpanInuse:
-		return float64(memStats.MSpanInuse)
-	case mSpanSys:
-		return float64(memStats.MSpanSys)
-	case mallocs:
-		return float64(memStats.Mallocs)
-	case nextGC:
-		return float64(memStats.NextGC)
-	case numForcedGC:
-		return float64(memStats.NumForcedGC)
-	case numGC:
-		return float64(memStats.NumGC)
-	case otherSys:
-		return float64(memStats.OtherSys)
-	case pauseTotalNs:
-		return float64(memStats.PauseTotalNs)
-	case stackInuse:
-		return float64(memStats.StackInuse)
-	case stackSys:
-		return float64(memStats.StackSys)
-	case sys:
-		return float64(memStats.Sys)
-	case totalAlloc:
-		return float64(memStats.TotalAlloc)
-	default:
-		return 0
-	}
+type memStatGetter func(runtime.MemStats) float64
+
+var gaugeMemStats = map[string]memStatGetter{
+	alloc:         func(ms runtime.MemStats) float64 { return float64(ms.Alloc) },
+	buckHashSys:   func(ms runtime.MemStats) float64 { return float64(ms.BuckHashSys) },
+	frees:         func(ms runtime.MemStats) float64 { return float64(ms.Frees) },
+	gCCPUFraction: func(ms runtime.MemStats) float64 { return ms.GCCPUFraction },
+	gCSys:         func(ms runtime.MemStats) float64 { return float64(ms.GCSys) },
+	heapAlloc:     func(ms runtime.MemStats) float64 { return float64(ms.HeapAlloc) },
+	heapIdle:      func(ms runtime.MemStats) float64 { return float64(ms.HeapIdle) },
+	heapInuse:     func(ms runtime.MemStats) float64 { return float64(ms.HeapInuse) },
+	heapObjects:   func(ms runtime.MemStats) float64 { return float64(ms.HeapObjects) },
+	heapReleased:  func(ms runtime.MemStats) float64 { return float64(ms.HeapReleased) },
+	heapSys:       func(ms runtime.MemStats) float64 { return float64(ms.HeapSys) },
+	lastGC:        func(ms runtime.MemStats) float64 { return float64(ms.LastGC) },
+	lookups:       func(ms runtime.MemStats) float64 { return float64(ms.Lookups) },
+	mCacheInuse:   func(ms runtime.MemStats) float64 { return float64(ms.MCacheInuse) },
+	mCacheSys:     func(ms runtime.MemStats) float64 { return float64(ms.MCacheSys) },
+	mSpanInuse:    func(ms runtime.MemStats) float64 { return float64(ms.MSpanInuse) },
+	mSpanSys:      func(ms runtime.MemStats) float64 { return float64(ms.MSpanSys) },
+	mallocs:       func(ms runtime.MemStats) float64 { return float64(ms.Mallocs) },
+	nextGC:        func(ms runtime.MemStats) float64 { return float64(ms.NextGC) },
+	numForcedGC:   func(ms runtime.MemStats) float64 { return float64(ms.NumForcedGC) },
+	numGC:         func(ms runtime.MemStats) float64 { return float64(ms.NumGC) },
+	otherSys:      func(ms runtime.MemStats) float64 { return float64(ms.OtherSys) },
+	pauseTotalNs:  func(ms runtime.MemStats) float64 { return float64(ms.PauseTotalNs) },
+	stackInuse:    func(ms runtime.MemStats) float64 { return float64(ms.StackInuse) },
+	stackSys:      func(ms runtime.MemStats) float64 { return float64(ms.StackSys) },
+	sys:           func(ms runtime.MemStats) float64 { return float64(ms.Sys) },
+	totalAlloc:    func(ms runtime.MemStats) float64 { return float64(ms.TotalAlloc) },
 }
