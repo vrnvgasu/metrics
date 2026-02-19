@@ -1,7 +1,7 @@
 package config
 
 type ServerCnf struct {
-	Address string
+	Address string `env:"ADDRESS"`
 }
 
 func (s *ServerCnf) String() string {
