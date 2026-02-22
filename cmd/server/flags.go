@@ -13,6 +13,7 @@ func parseFlags() *config.ServerCnf {
 	cnf := &config.ServerCnf{}
 
 	pflag.StringVarP(&cnf.Address, "address", "a", "localhost:8080", "address:port to listen on")
+	pflag.StringVarP(&cnf.LogLevel, "loglevel", "l", "info", "log level")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

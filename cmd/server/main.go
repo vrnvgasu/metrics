@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/vrnvgasu/metrics/internal/handler"
+	"github.com/vrnvgasu/metrics/internal/logger"
 	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
@@ -26,6 +27,11 @@ func run() error {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	err := logger.Initialize(cnf.LogLevel)
+	if err != nil {
+		return fmt.Errorf("could not initialize logger: %w", err)
+	}
 
 	storage := repository.NewMemStorage()
 	h := handler.NewHandler(storage)

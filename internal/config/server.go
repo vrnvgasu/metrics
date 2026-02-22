@@ -1,7 +1,8 @@
 package config
 
 type ServerCnf struct {
-	Address string `env:"ADDRESS"`
+	Address  string `env:"ADDRESS"`
+	LogLevel string `env:"LOG_LEVEL"`
 }
 
 func (s *ServerCnf) String() string {
