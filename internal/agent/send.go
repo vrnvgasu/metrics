@@ -1,19 +1,35 @@
 package agent
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"time"
 
 	"github.com/vrnvgasu/metrics/internal/config"
+	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
 const (
 	path = "update"
 )
+
+type ServerNotAvailableError struct {
+	Err error
+	Msg string
+}
+
+func (e *ServerNotAvailableError) Error() string {
+	return fmt.Sprintf("%s: %v", e.Msg, e.Err)
+}
+
+func (e *ServerNotAvailableError) Unwrap() error {
+	return e.Err
+}
 
 func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 	for {
@@ -30,7 +46,12 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 			}
 
 			if err := a.SendMetric(*m, cnf.Address); err != nil {
-				return fmt.Errorf("sending metric: %w", err)
+				var availableErr *ServerNotAvailableError
+				if !errors.As(err, &availableErr) {
+					return fmt.Errorf("sending metric: %w", err)
+				}
+
+				logger.Log.Errorf("failed to send metrics: %v", err)
 			}
 		}
 		time.Sleep(time.Duration(cnf.ReportInterval) * time.Second)
@@ -38,10 +59,18 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 }
 
 func (a *Agent) SendMetric(m models.Metrics, address string) error {
-	url := fmt.Sprintf("http://%s/%s/%s/%s/%s", address, path, m.MType, m.ID, m.ValueToString())
-	resp, err := a.Client.Post(url, "text/plain", http.NoBody)
+	body, err := json.Marshal(m)
 	if err != nil {
-		return fmt.Errorf("sending metric: %w", err)
+		return fmt.Errorf("marshaling metric: %w", err)
+	}
+
+	url := fmt.Sprintf("http://%s/%s", address, path)
+	resp, err := a.Client.Post(url, "text/plain", bytes.NewBuffer(body))
+	if err != nil {
+		return &ServerNotAvailableError{
+			Err: err,
+			Msg: "sending metric:",
+		}
 	}
 
 	_, err = io.Copy(io.Discard, resp.Body)
