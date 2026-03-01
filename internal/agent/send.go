@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
+	"github.com/vrnvgasu/metrics/pkg/compress"
 )
 
 const (
@@ -19,6 +21,11 @@ const (
 )
 
 type ServerNotAvailableError struct {
+	Err error
+	Msg string
+}
+
+type ResponseError struct {
 	Err error
 	Msg string
 }
@@ -64,8 +71,20 @@ func (a *Agent) SendMetric(m models.Metrics, address string) error {
 		return fmt.Errorf("marshaling metric: %w", err)
 	}
 
+	cBody, err := compress.GzipCompress(body)
+	if err != nil {
+		return fmt.Errorf("compressing metric: %w", err)
+	}
+
 	url := fmt.Sprintf("http://%s/%s", address, path)
-	resp, err := a.Client.Post(url, "text/plain", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(cBody))
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+	resp, err := a.Client.Do(req)
 	if err != nil {
 		return &ServerNotAvailableError{
 			Err: err,

@@ -11,6 +11,7 @@ import (
 
 type Client interface {
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
+	Do(req *http.Request) (resp *http.Response, err error)
 }
 
 type Agent struct {

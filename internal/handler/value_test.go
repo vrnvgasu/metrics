@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -41,6 +42,7 @@ func TestValue(t *testing.T) {
 		expectedStatus      int
 		expectedContentType string
 		expectedBody        any
+		gzipResponse        bool
 	}{
 		{
 			name:   "success gauge",
@@ -106,6 +108,22 @@ func TestValue(t *testing.T) {
 			expectedStatus:      http.StatusNotFound,
 			expectedContentType: "text/plain",
 		},
+		{
+			name:   "success gzip",
+			method: http.MethodPost,
+			body: ValueRequest{
+				ID:    "1",
+				MType: models.Gauge,
+			},
+			expectedStatus:      http.StatusOK,
+			expectedContentType: "application/json",
+			expectedBody: ValueResponse{
+				ID:    "1",
+				MType: models.Gauge,
+				Value: helper.NewRefFloat64(842315.916000),
+			},
+			gzipResponse: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -118,6 +136,9 @@ func TestValue(t *testing.T) {
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
 			request := httptest.NewRequest(tt.method, path, bytes.NewBuffer(body))
+			if tt.gzipResponse {
+				request.Header.Set("Accept-Encoding", "gzip")
+			}
 			w := httptest.NewRecorder()
 
 			NewRouter(h).ServeHTTP(w, request)
@@ -129,8 +150,14 @@ func TestValue(t *testing.T) {
 			assert.Contains(t, res.Header.Get("Content-Type"), tt.expectedContentType)
 
 			if res.StatusCode == http.StatusOK {
+				reader := res.Body
+				if tt.gzipResponse {
+					reader, err = gzip.NewReader(reader)
+					require.NoError(t, err)
+				}
+
 				v := &ValueResponse{}
-				err = json.NewDecoder(res.Body).Decode(v)
+				err = json.NewDecoder(reader).Decode(v)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedBody, *v)
 			}

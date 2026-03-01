@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -122,4 +123,46 @@ func TestUpdateJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpdateJSONGzipCompress(t *testing.T) {
+	t.Parallel()
+
+	var (
+		path          = "/update"
+		updateRequest = UpdateJSONRequest{
+			ID:    "11",
+			MType: models.Gauge,
+			Value: helper.NewRefFloat64(1.1),
+		}
+		buf bytes.Buffer
+	)
+
+	repo := repository.NewMemStorage()
+	h := NewHandler(repo)
+
+	body, err := json.Marshal(updateRequest)
+	require.NoError(t, err)
+
+	gzipWriter := gzip.NewWriter(&buf)
+	_, err = gzipWriter.Write(body)
+	gzipWriter.Close()
+	require.NoError(t, err)
+
+	request := httptest.NewRequest(http.MethodPost, path, bytes.NewBuffer(buf.Bytes()))
+	request.Header.Set("Content-Encoding", "gzip")
+	w := httptest.NewRecorder()
+
+	NewRouter(h).ServeHTTP(w, request)
+
+	res := w.Result()
+	res.Body.Close()
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	metric, err := repo.GetByTypeAndID(updateRequest.MType, updateRequest.ID)
+	require.NoError(t, err)
+	assert.NotEmpty(t, metric.ID)
+	assert.Equal(t, updateRequest.ID, metric.ID)
+	assert.Equal(t, updateRequest.MType, metric.MType)
+	assert.Equal(t, *updateRequest.Value, *metric.Value)
 }
