@@ -14,6 +14,9 @@ func parseFlags() *config.ServerCnf {
 
 	pflag.StringVarP(&cnf.Address, "address", "a", "localhost:8080", "address:port to listen on")
 	pflag.StringVarP(&cnf.LogLevel, "loglevel", "l", "info", "log level")
+	pflag.IntVarP(&cnf.StoreInterval, "storeInterval", "i", 300, "store interval in seconds")
+	pflag.StringVarP(&cnf.FileStoragePath, "fileStoragePath", "f", "store.json", "file storage path")
+	pflag.BoolVarP(&cnf.Restore, "Restore", "r", true, "restore storage data")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

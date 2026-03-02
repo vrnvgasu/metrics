@@ -1,8 +1,11 @@
 package config
 
 type ServerCnf struct {
-	Address  string `env:"ADDRESS"`
-	LogLevel string `env:"LOG_LEVEL"`
+	Address         string `env:"ADDRESS"`
+	LogLevel        string `env:"LOG_LEVEL"`
+	StoreInterval   int    `env:"STORE_INTERVAL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	Restore         bool   `env:"RESTORE"`
 }
 
 func (s *ServerCnf) String() string {
