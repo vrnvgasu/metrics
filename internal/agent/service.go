@@ -6,13 +6,12 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/bytedance/gopkg/util/logger"
-
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
 type Client interface {
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
+	Do(req *http.Request) (resp *http.Response, err error)
 }
 
 type Agent struct {
@@ -30,11 +29,7 @@ func NewAgent(client Client, bufSize int) *Agent {
 }
 
 func (a *Agent) pushMetric(m models.Metrics) {
-	select {
-	case a.Metrics <- m:
-	default:
-		logger.Warnf("metrics channel full; lost metric: %v", m)
-	}
+	a.Metrics <- m
 }
 
 func (a *Agent) pollMetric() *models.Metrics {

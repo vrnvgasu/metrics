@@ -11,8 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/handler"
+	"github.com/vrnvgasu/metrics/internal/logger"
 	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/service"
 )
 
 func main() {
@@ -27,31 +30,70 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	err := logger.Initialize(cnf.LogLevel)
+	if err != nil {
+		return fmt.Errorf("could not initialize logger: %w", err)
+	}
+
 	storage := repository.NewMemStorage()
 	h := handler.NewHandler(storage)
-	server := handler.NewServer(handler.NewRouter(h), cnf)
+	router := handler.NewServer(handler.NewRouter(h), cnf)
 
+	server, err := service.NewService(storage, *cnf)
+	if err != nil {
+		return fmt.Errorf("could not create service: %w", err)
+	}
+
+	serverErr, err := start(ctx, cnf, router, server)
+	if err != nil {
+		return err
+	}
+
+	return wait(ctx, serverErr, router, server)
+}
+
+func start(
+	ctx context.Context, cnf *config.ServerCnf, router *handler.Server, server *service.Service,
+) (chan error, error) {
 	serverErr := make(chan error)
 
+	if err := server.Restore(); err != nil {
+		return nil, fmt.Errorf("could not restore server: %w", err)
+	}
+
 	go func() {
-		log.Println("starting server on: ", cnf.Address)
-		if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Println("starting router on: ", cnf.Address)
+		if err := router.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+	}()
+	go func() {
+		log.Printf("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
+		if err := server.StoreInterval(ctx); err != nil {
 			serverErr <- err
 		}
 	}()
 
+	return serverErr, nil
+}
+
+func wait(ctx context.Context, serverErr chan error, router *handler.Server, server *service.Service) error {
 	select {
 	case <-ctx.Done():
-		log.Println("shutting down server")
+		log.Println("shutting down router")
 	case err := <-serverErr:
-		return fmt.Errorf("server error: %w", err)
+		return fmt.Errorf("router error: %w", err)
+	}
+
+	if err := server.Stop(); err != nil {
+		return fmt.Errorf("could not stop server: %w", err)
 	}
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("server shutdown error: %w", err)
+	if err := router.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("router shutdown error: %w", err)
 	}
 
 	return nil
