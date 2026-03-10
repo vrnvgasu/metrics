@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/vrnvgasu/metrics/internal/repository"
+	seriveerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type FindRequest struct {
@@ -19,25 +18,20 @@ func (h *Handler) Find(c *gin.Context) {
 
 	var req FindRequest
 	if err := c.ShouldBindUri(&req); err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusBadRequest)
+		h.responseError(c, seriveerrors.BadRequestError(err.Error()))
 
 		return
 	}
 
-	m, err := h.Storage.GetByTypeAndID(req.MType, req.Name)
+	m, err := h.Service.FindByTypeAndID(c, req.MType, req.Name)
 	if err != nil {
-
-		if errors.Is(err, repository.ErrNotFound) {
-			http.Error(c.Writer, err.Error(), http.StatusNotFound)
-		} else {
-			http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
-		}
+		h.responseError(c, err)
 
 		return
 	}
 
 	if _, err = c.Writer.Write([]byte(m.ValueToString())); err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+		h.responseError(c, err)
 
 		return
 	}

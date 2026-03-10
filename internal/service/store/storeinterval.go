@@ -1,4 +1,4 @@
-package service
+package store
 
 import (
 	"context"
@@ -14,7 +14,7 @@ func (s *Service) StoreInterval(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		default:
-			if err := s.flushOnFile(); err != nil {
+			if err := s.flushOnFile(ctx); err != nil {
 				return fmt.Errorf("s.StoreInterval flushOnFile: %w", err)
 			}
 		}
@@ -23,8 +23,8 @@ func (s *Service) StoreInterval(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) flushOnFile() error {
-	list := s.storage.List()
+func (s *Service) flushOnFile(ctx context.Context) error {
+	list := s.storage.List(ctx)
 	if err := s.producer.WriteMetrics(&list); err != nil {
 		return fmt.Errorf("s.flush WriteMetrics: %w", err)
 	}

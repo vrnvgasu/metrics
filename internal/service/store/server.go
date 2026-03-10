@@ -1,16 +1,17 @@
-package service
+package store
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/service/handler"
+	"github.com/vrnvgasu/metrics/internal/service/store/provider"
 )
 
 type Storage interface {
-	List() models.MetricsList
-	Add(m models.Metrics) error
+	List(context.Context) models.MetricsList
+	Add(context.Context, *models.Metrics) error
 }
 
 type Service struct {
@@ -18,11 +19,11 @@ type Service struct {
 
 	storage  Storage
 	cnf      config.ServerCnf
-	producer *handler.Producer
+	producer *provider.Producer
 }
 
 func NewService(storage Storage, cnf config.ServerCnf) (*Service, error) {
-	p, err := handler.NewProducer(cnf.FileStoragePath)
+	p, err := provider.NewProducer(cnf.FileStoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("server.StoreInterval NewProducer: %w", err)
 	}

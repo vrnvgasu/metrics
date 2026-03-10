@@ -1,23 +1,24 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
-func (ms *MemStorage) Add(m models.Metrics) error {
+func (ms *MemStorage) Add(_ context.Context, m *models.Metrics) error {
 	switch m.MType {
 	case models.Gauge:
-		ms.addGauge(m)
+		ms.addGauge(*m)
 
 		return nil
 	case models.Counter:
-		ms.addCounter(m)
+		ms.addCounter(*m)
 
 		return nil
 	default:
-		return fmt.Errorf("metrics type %s not supported", m.MType)
+		return fmt.Errorf("metrics type %s not supported: %w", m.MType, ErrNotSupport)
 	}
 }
 

@@ -1,19 +1,70 @@
 package handler
 
-import models "github.com/vrnvgasu/metrics/internal/model"
+import (
+	"context"
+	"errors"
+	"net/http"
 
-type Storage interface {
-	Add(m models.Metrics) error
-	GetByTypeAndID(mtype, id string) (models.Metrics, error)
-	List() models.MetricsList
+	"github.com/gin-gonic/gin"
+
+	models "github.com/vrnvgasu/metrics/internal/model"
+	seriveerrors "github.com/vrnvgasu/metrics/internal/service/errors"
+)
+
+type Service interface {
+	CreateOrUpdate(context.Context, *models.Metrics) error
+	FindByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error)
+	AllMetrics(context.Context) models.MetricsList
+}
+
+type ResponseError struct {
+	Code     string `json:"code"`
+	HttpCode int    `json:"httpCode"`
+	Title    string `json:"title"`
+	Message  string `json:"message"`
+	Error    string `json:"error,omitempty"`
 }
 
 type Handler struct {
-	Storage Storage
+	Service Service
 }
 
-func NewHandler(s Storage) *Handler {
+func NewHandler(s Service) *Handler {
 	return &Handler{
-		Storage: s,
+		Service: s,
 	}
+}
+
+func (h *Handler) responseError(c *gin.Context, err error) {
+	if err != nil {
+		_ = c.Error(err)
+	}
+
+	var serviceError *seriveerrors.ServiceError
+
+	switch {
+	case errors.As(err, &serviceError):
+		h.parseServiceError(c, serviceError)
+	default:
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError{
+			Message:  string(seriveerrors.ErrInternal),
+			HttpCode: http.StatusInternalServerError,
+			Title:    "Unhandled error",
+		})
+	}
+}
+
+func (h *Handler) parseServiceError(c *gin.Context, err *seriveerrors.ServiceError) {
+	sourceError := ""
+	if err.SourceError != nil {
+		sourceError = err.SourceError.Error()
+	}
+
+	c.AbortWithStatusJSON(err.HttpCode, ResponseError{
+		Code:     string(err.Type),
+		HttpCode: err.HttpCode,
+		Title:    err.Title,
+		Message:  err.Message,
+		Error:    sourceError,
+	})
 }

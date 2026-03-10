@@ -1,17 +1,18 @@
-package service
+package store
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/vrnvgasu/metrics/internal/service/handler"
+	"github.com/vrnvgasu/metrics/internal/service/store/provider"
 )
 
-func (s *Service) Restore() error {
+func (s *Service) Restore(ctx context.Context) error {
 	if !s.cnf.Restore {
 		return nil
 	}
 
-	consumer, err := handler.NewConsumer(s.cnf.FileStoragePath)
+	consumer, err := provider.NewConsumer(s.cnf.FileStoragePath)
 	if err != nil {
 		return fmt.Errorf("server.Restore NewConsumer: %w", err)
 	}
@@ -22,7 +23,7 @@ func (s *Service) Restore() error {
 	}
 
 	for _, m := range list {
-		if err = s.storage.Add(m); err != nil {
+		if err = s.storage.Add(ctx, &m); err != nil {
 			return fmt.Errorf("server.Restore Add: %w", err)
 		}
 	}

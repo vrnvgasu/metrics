@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
@@ -92,7 +94,8 @@ func TestUpdateJSON(t *testing.T) {
 			t.Parallel()
 
 			repo := repository.NewMemStorage()
-			h := NewHandler(repo)
+			s := metric.NewService(repo)
+			h := NewHandler(s)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -108,7 +111,7 @@ func TestUpdateJSON(t *testing.T) {
 
 			if res.StatusCode == http.StatusOK {
 				req := tt.body.(UpdateJSONRequest)
-				metric, err := repo.GetByTypeAndID(req.MType, req.ID)
+				metric, err := repo.GetByTypeAndID(context.Background(), req.MType, req.ID)
 				require.NoError(t, err)
 				assert.NotEmpty(t, metric.ID)
 				assert.Equal(t, req.ID, metric.ID)
@@ -139,7 +142,8 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 	)
 
 	repo := repository.NewMemStorage()
-	h := NewHandler(repo)
+	s := metric.NewService(repo)
+	h := NewHandler(s)
 
 	body, err := json.Marshal(updateRequest)
 	require.NoError(t, err)
@@ -159,7 +163,7 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 	res.Body.Close()
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	metric, err := repo.GetByTypeAndID(updateRequest.MType, updateRequest.ID)
+	metric, err := repo.GetByTypeAndID(context.Background(), updateRequest.MType, updateRequest.ID)
 	require.NoError(t, err)
 	assert.NotEmpty(t, metric.ID)
 	assert.Equal(t, updateRequest.ID, metric.ID)

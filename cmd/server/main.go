@@ -15,7 +15,8 @@ import (
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
 	"github.com/vrnvgasu/metrics/internal/repository"
-	"github.com/vrnvgasu/metrics/internal/service"
+	"github.com/vrnvgasu/metrics/internal/service/metric"
+	"github.com/vrnvgasu/metrics/internal/service/store"
 )
 
 func main() {
@@ -36,28 +37,28 @@ func run() error {
 	}
 
 	storage := repository.NewMemStorage()
-	h := handler.NewHandler(storage)
+	h := handler.NewHandler(metric.NewService(storage))
 	router := handler.NewServer(handler.NewRouter(h), cnf)
 
-	server, err := service.NewService(storage, *cnf)
+	storeService, err := store.NewService(storage, *cnf)
 	if err != nil {
 		return fmt.Errorf("could not create service: %w", err)
 	}
 
-	serverErr, err := start(ctx, cnf, router, server)
+	serverErr, err := start(ctx, cnf, router, storeService)
 	if err != nil {
 		return err
 	}
 
-	return wait(ctx, serverErr, router, server)
+	return wait(ctx, serverErr, router, storeService)
 }
 
 func start(
-	ctx context.Context, cnf *config.ServerCnf, router *handler.Server, server *service.Service,
+	ctx context.Context, cnf *config.ServerCnf, router *handler.Server, server *store.Service,
 ) (chan error, error) {
 	serverErr := make(chan error)
 
-	if err := server.Restore(); err != nil {
+	if err := server.Restore(ctx); err != nil {
 		return nil, fmt.Errorf("could not restore server: %w", err)
 	}
 
@@ -77,7 +78,7 @@ func start(
 	return serverErr, nil
 }
 
-func wait(ctx context.Context, serverErr chan error, router *handler.Server, server *service.Service) error {
+func wait(ctx context.Context, serverErr chan error, router *handler.Server, server *store.Service) error {
 	select {
 	case <-ctx.Done():
 		log.Println("shutting down router")

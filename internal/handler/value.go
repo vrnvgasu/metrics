@@ -1,13 +1,12 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type ValueRequest struct {
@@ -35,23 +34,17 @@ func (h *Handler) Value(c *gin.Context) {
 	var body ValueRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
 
 		return
 	}
 
-	metrics, err := h.Storage.GetByTypeAndID(body.MType, body.ID)
+	metrics, err := h.Service.FindByTypeAndID(c, body.MType, body.ID)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.responseError(c, err)
 
 		return
 	}
 
-	c.JSON(http.StatusOK, NewValueResponseFromMetric(metrics))
+	c.JSON(http.StatusOK, NewValueResponseFromMetric(*metrics))
 }

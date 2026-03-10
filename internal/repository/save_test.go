@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -121,7 +122,7 @@ func TestMemStorageAdd(t *testing.T) {
 				metrics: tt.metrics,
 			}
 
-			err := s.Add(tt.m)
+			err := s.Add(context.Background(), &tt.m)
 			tt.expectedErr(t, err)
 			for k, v := range tt.expectedMetrics {
 				m, ok := s.metrics[k]

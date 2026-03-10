@@ -1,4 +1,4 @@
-package service
+package store
 
 import (
 	"context"
@@ -19,6 +19,8 @@ import (
 func TestStoreInterval(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	tests := []struct {
 		name string
 		repo func() (*repository.MemStorage, error)
@@ -27,7 +29,7 @@ func TestStoreInterval(t *testing.T) {
 			name: "save list",
 			repo: func() (*repository.MemStorage, error) {
 				repo := repository.NewMemStorage()
-				err := repo.Add(models.Metrics{
+				err := repo.Add(ctx, &models.Metrics{
 					ID:    "1",
 					MType: models.Gauge,
 					Value: helper.NewRefFloat64(842315.916000),
@@ -74,7 +76,7 @@ func TestStoreInterval(t *testing.T) {
 			bytes, err := io.ReadAll(file)
 			require.NoError(t, err)
 
-			expected, err := json.Marshal(repo.List())
+			expected, err := json.Marshal(repo.List(ctx))
 			require.NoError(t, err)
 			require.JSONEq(t, string(expected), string(bytes))
 

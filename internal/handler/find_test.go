@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,25 +12,29 @@ import (
 
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
 func TestFind(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 
-	s := repository.NewMemStorage()
-	err := s.Add(models.Metrics{
+	repo := repository.NewMemStorage()
+	err := repo.Add(ctx, &models.Metrics{
 		ID:    "1",
 		MType: models.Gauge,
 		Value: helper.NewRefFloat64(842315.916000),
 	})
 	require.NoError(t, err)
-	err = s.Add(models.Metrics{
+	err = repo.Add(ctx, &models.Metrics{
 		ID:    "2",
 		MType: models.Counter,
 		Delta: helper.NewRefInt64(11),
 	})
 	require.NoError(t, err)
+
+	s := metric.NewService(repo)
 
 	tests := []struct {
 		name                string

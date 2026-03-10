@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/service/metric"
 )
 
 func TestUpdate(t *testing.T) {
@@ -141,7 +142,9 @@ func TestUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := NewHandler(repository.NewMemStorage())
+			repo := repository.NewMemStorage()
+			s := metric.NewService(repo)
+			h := NewHandler(s)
 
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			request.Header.Add("Content-Type", tt.contentType)

@@ -1,8 +1,12 @@
 package repository
 
-import models "github.com/vrnvgasu/metrics/internal/model"
+import (
+	"context"
 
-func (ms *MemStorage) List() models.MetricsList {
+	models "github.com/vrnvgasu/metrics/internal/model"
+)
+
+func (ms *MemStorage) List(_ context.Context) models.MetricsList {
 	list := make([]models.Metrics, 0, len(ms.metrics))
 	for _, m := range ms.metrics {
 		list = append(list, m)

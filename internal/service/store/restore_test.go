@@ -1,6 +1,7 @@
-package service
+package store
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -14,6 +15,8 @@ import (
 
 func TestStoreRestore(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 
 	tests := []struct {
 		name            string
@@ -67,10 +70,10 @@ func TestStoreRestore(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			err = service.Restore()
+			err = service.Restore(ctx)
 			require.NoError(t, err)
 
-			require.Equal(t, tt.expectedMetrics, repo.List())
+			require.Equal(t, tt.expectedMetrics, repo.List(ctx))
 
 			defer func() {
 				service.Stop()
