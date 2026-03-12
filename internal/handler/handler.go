@@ -11,27 +11,33 @@ import (
 	seriveerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
-type Service interface {
+type MetricService interface {
 	CreateOrUpdate(context.Context, *models.Metrics) error
 	FindByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error)
 	AllMetrics(context.Context) models.MetricsList
 }
 
+type HealthService interface {
+	CheckPing(ctx context.Context) error
+}
+
 type ResponseError struct {
 	Code     string `json:"code"`
-	HttpCode int    `json:"httpCode"`
+	HTTPCode int    `json:"httpCode"`
 	Title    string `json:"title"`
 	Message  string `json:"message"`
 	Error    string `json:"error,omitempty"`
 }
 
 type Handler struct {
-	Service Service
+	MetricService MetricService
+	HealthService HealthService
 }
 
-func NewHandler(s Service) *Handler {
+func NewHandler(m MetricService, h HealthService) *Handler {
 	return &Handler{
-		Service: s,
+		MetricService: m,
+		HealthService: h,
 	}
 }
 
@@ -48,7 +54,7 @@ func (h *Handler) responseError(c *gin.Context, err error) {
 	default:
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError{
 			Message:  string(seriveerrors.ErrInternal),
-			HttpCode: http.StatusInternalServerError,
+			HTTPCode: http.StatusInternalServerError,
 			Title:    "Unhandled error",
 		})
 	}
@@ -60,9 +66,9 @@ func (h *Handler) parseServiceError(c *gin.Context, err *seriveerrors.ServiceErr
 		sourceError = err.SourceError.Error()
 	}
 
-	c.AbortWithStatusJSON(err.HttpCode, ResponseError{
+	c.AbortWithStatusJSON(err.HTTPCode, ResponseError{
 		Code:     string(err.Type),
-		HttpCode: err.HttpCode,
+		HTTPCode: err.HTTPCode,
 		Title:    err.Title,
 		Message:  err.Message,
 		Error:    sourceError,

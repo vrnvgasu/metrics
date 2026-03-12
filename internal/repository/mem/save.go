@@ -1,10 +1,11 @@
-package repository
+package mem
 
 import (
 	"context"
 	"fmt"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
+	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
 func (ms *MemStorage) Add(_ context.Context, m *models.Metrics) error {
@@ -18,7 +19,7 @@ func (ms *MemStorage) Add(_ context.Context, m *models.Metrics) error {
 
 		return nil
 	default:
-		return fmt.Errorf("metrics type %s not supported: %w", m.MType, ErrNotSupport)
+		return fmt.Errorf("metrics type %s not supported: %w", m.MType, repository.ErrNotSupport)
 	}
 }
 

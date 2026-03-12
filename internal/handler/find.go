@@ -23,7 +23,7 @@ func (h *Handler) Find(c *gin.Context) {
 		return
 	}
 
-	m, err := h.Service.FindByTypeAndID(c, req.MType, req.Name)
+	m, err := h.MetricService.FindByTypeAndID(c, req.MType, req.Name)
 	if err != nil {
 		h.responseError(c, err)
 

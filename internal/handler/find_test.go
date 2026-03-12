@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
@@ -20,7 +20,7 @@ func TestFind(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	repo := repository.NewMemStorage()
+	repo := mem.NewMemStorage()
 	err := repo.Add(ctx, &models.Metrics{
 		ID:    "1",
 		MType: models.Gauge,
@@ -98,7 +98,7 @@ func TestFind(t *testing.T) {
 			t.Parallel()
 
 			require.NoError(t, err)
-			h := NewHandler(s)
+			h := NewHandler(s, nil)
 
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			request.Header.Add("Content-Type", tt.contentType)

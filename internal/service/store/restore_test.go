@@ -9,7 +9,7 @@ import (
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
@@ -63,7 +63,7 @@ func TestStoreRestore(t *testing.T) {
 			_, err = file.Write([]byte(tt.fileBody))
 			require.NoError(t, err)
 
-			repo := repository.NewMemStorage()
+			repo := mem.NewMemStorage()
 			service, err := NewService(repo, config.ServerCnf{
 				Restore:         tt.restore,
 				FileStoragePath: fileName,

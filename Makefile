@@ -10,3 +10,13 @@ build:
 test:
 	@echo "test"
 	@go test ./... -v
+
+.PHONY: infra-up
+infra-up:
+	@echo "local-up"
+	@docker compose -f deployments/docker-compose.yaml up -d
+
+.PHONY: infra-down
+infra-down:
+	@echo "local-down"
+	@docker compose -f deployments/docker-compose.yaml down

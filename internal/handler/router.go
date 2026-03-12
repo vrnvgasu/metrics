@@ -36,5 +36,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 		updateGroup.POST("/:mtype/:name/:value", handler.Update)
 	}
 
+	r.GET("/ping", handler.Ping)
+
 	return r
 }

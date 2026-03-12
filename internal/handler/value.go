@@ -39,7 +39,7 @@ func (h *Handler) Value(c *gin.Context) {
 		return
 	}
 
-	metrics, err := h.Service.FindByTypeAndID(c, body.MType, body.ID)
+	metrics, err := h.MetricService.FindByTypeAndID(c, body.MType, body.ID)
 	if err != nil {
 		h.responseError(c, err)
 

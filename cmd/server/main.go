@@ -14,7 +14,9 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
+	"github.com/vrnvgasu/metrics/internal/repository/postgres"
+	"github.com/vrnvgasu/metrics/internal/service/healthcheck"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/internal/service/store"
 )
@@ -36,11 +38,20 @@ func run() error {
 		return fmt.Errorf("could not initialize logger: %w", err)
 	}
 
-	storage := repository.NewMemStorage()
-	h := handler.NewHandler(metric.NewService(storage))
+	memStorage := mem.NewMemStorage()
+
+	dbStorage := postgres.NewService()
+	if err = dbStorage.Start(ctx, cnf.DatabaseDSN); err != nil {
+		return fmt.Errorf("could not start database storage: %w", err)
+	}
+
+	metricService := metric.NewService(memStorage)
+	healthService := healthcheck.NewService(dbStorage)
+
+	h := handler.NewHandler(metricService, healthService)
 	router := handler.NewServer(handler.NewRouter(h), cnf)
 
-	storeService, err := store.NewService(storage, *cnf)
+	storeService, err := store.NewService(memStorage, *cnf)
 	if err != nil {
 		return fmt.Errorf("could not create service: %w", err)
 	}

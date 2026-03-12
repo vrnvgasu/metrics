@@ -8,17 +8,18 @@ import (
 type ServiceErrorType string
 
 const (
-	ErrNotFound            ServiceErrorType = "not found"
-	ErrInternal            ServiceErrorType = "internal server error"
-	ErrUnprocessableEntity ServiceErrorType = "unprocessable entity"
-	ErrBadRequest          ServiceErrorType = "bad request"
+	ErrNotFound                ServiceErrorType = "not found"
+	ErrInternal                ServiceErrorType = "internal server error"
+	ErrUnprocessableEntity     ServiceErrorType = "unprocessable entity"
+	ErrBadRequest              ServiceErrorType = "bad request"
+	ErrServiceUnavailableError ServiceErrorType = "service unavailable"
 )
 
 type ServiceError struct {
 	Type        ServiceErrorType
 	Title       string
 	Message     string
-	HttpCode    int
+	HTTPCode    int
 	SourceError error
 }
 
@@ -34,7 +35,7 @@ func NotFoundError(err error, message string) error {
 	return &ServiceError{
 		Type:        ErrNotFound,
 		Title:       "Not found",
-		HttpCode:    http.StatusNotFound,
+		HTTPCode:    http.StatusNotFound,
 		Message:     message,
 		SourceError: err,
 	}
@@ -45,15 +46,24 @@ func UnprocessableEntity(message string) error {
 		Type:     ErrUnprocessableEntity,
 		Title:    "Unprocessable entity",
 		Message:  message,
-		HttpCode: http.StatusUnprocessableEntity,
+		HTTPCode: http.StatusUnprocessableEntity,
 	}
 }
 
-func BadRequestError(message string) error { // todo: rename to BadRequest
+func BadRequestError(message string) error {
 	return &ServiceError{
 		Type:     ErrBadRequest,
 		Title:    "Bad request",
 		Message:  message,
-		HttpCode: http.StatusBadRequest,
+		HTTPCode: http.StatusBadRequest,
+	}
+}
+
+func InternalError(message string) error {
+	return &ServiceError{
+		Type:     ErrInternal,
+		Title:    "Internal Server Error",
+		Message:  message,
+		HTTPCode: http.StatusInternalServerError,
 	}
 }

@@ -12,7 +12,7 @@ import (
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
@@ -23,12 +23,12 @@ func TestStoreInterval(t *testing.T) {
 
 	tests := []struct {
 		name string
-		repo func() (*repository.MemStorage, error)
+		repo func() (*mem.MemStorage, error)
 	}{
 		{
 			name: "save list",
-			repo: func() (*repository.MemStorage, error) {
-				repo := repository.NewMemStorage()
+			repo: func() (*mem.MemStorage, error) {
+				repo := mem.NewMemStorage()
 				err := repo.Add(ctx, &models.Metrics{
 					ID:    "1",
 					MType: models.Gauge,
@@ -43,8 +43,8 @@ func TestStoreInterval(t *testing.T) {
 		},
 		{
 			name: "save empty",
-			repo: func() (*repository.MemStorage, error) {
-				return repository.NewMemStorage(), nil
+			repo: func() (*mem.MemStorage, error) {
+				return mem.NewMemStorage(), nil
 			},
 		},
 	}

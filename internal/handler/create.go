@@ -34,7 +34,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 
-	if err := h.Service.CreateOrUpdate(c, body.ToMetrics()); err != nil {
+	if err := h.MetricService.CreateOrUpdate(c, body.ToMetrics()); err != nil {
 		h.responseError(c, err)
 
 		return

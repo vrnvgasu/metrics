@@ -1,4 +1,4 @@
-package repository
+package mem
 
 import (
 	models "github.com/vrnvgasu/metrics/internal/model"

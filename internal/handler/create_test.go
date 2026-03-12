@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
@@ -93,9 +93,9 @@ func TestUpdateJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := repository.NewMemStorage()
+			repo := mem.NewMemStorage()
 			s := metric.NewService(repo)
-			h := NewHandler(s)
+			h := NewHandler(s, nil)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -141,9 +141,9 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 		buf bytes.Buffer
 	)
 
-	repo := repository.NewMemStorage()
+	repo := mem.NewMemStorage()
 	s := metric.NewService(repo)
-	h := NewHandler(s)
+	h := NewHandler(s, nil)
 
 	body, err := json.Marshal(updateRequest)
 	require.NoError(t, err)

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
@@ -25,7 +25,7 @@ func TestValue(t *testing.T) {
 
 	ctx := context.Background()
 
-	repo := repository.NewMemStorage()
+	repo := mem.NewMemStorage()
 	err := repo.Add(ctx, &models.Metrics{
 		ID:    "1",
 		MType: models.Gauge,
@@ -137,7 +137,7 @@ func TestValue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := NewHandler(s)
+			h := NewHandler(s, nil)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
