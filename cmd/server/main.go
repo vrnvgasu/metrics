@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
@@ -42,7 +44,7 @@ func run() error {
 
 	dbStorage := postgres.NewService()
 	if err = dbStorage.Start(ctx, cnf.DatabaseDSN); err != nil {
-		return fmt.Errorf("could not start database storage: %w", err)
+		logger.Log.Error("could not start database", zap.Error(err))
 	}
 
 	metricService := metric.NewService(memStorage)
