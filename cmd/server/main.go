@@ -11,13 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
-	"github.com/vrnvgasu/metrics/internal/repository/mem"
-	"github.com/vrnvgasu/metrics/internal/repository/postgres"
 	"github.com/vrnvgasu/metrics/internal/service/healthcheck"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/internal/service/store"
@@ -40,20 +36,18 @@ func run() error {
 		return fmt.Errorf("could not initialize logger: %w", err)
 	}
 
-	memStorage := mem.NewMemStorage()
-
-	dbStorage := postgres.NewService()
-	if err = dbStorage.Start(ctx, cnf.DatabaseDSN); err != nil {
-		logger.Log.Error("could not start database", zap.Error(err))
+	storage, err := initStorage(ctx, cnf)
+	if err != nil {
+		return fmt.Errorf("could not initialize storage: %w", err)
 	}
 
-	metricService := metric.NewService(memStorage)
-	healthService := healthcheck.NewService(dbStorage)
+	metricService := metric.NewService(storage)
+	healthService := healthcheck.NewService(storage)
 
 	h := handler.NewHandler(metricService, healthService)
 	router := handler.NewServer(handler.NewRouter(h), cnf)
 
-	storeService, err := store.NewService(memStorage, *cnf)
+	storeService, err := store.NewService(storage, metricService, *cnf)
 	if err != nil {
 		return fmt.Errorf("could not create service: %w", err)
 	}

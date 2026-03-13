@@ -27,7 +27,6 @@ type MetricsMap map[string]Metrics
 type MetricsList []Metrics
 
 func NewMetricsFromStrings(mType, ID, value string) (Metrics, error) {
-
 	m := &Metrics{
 		ID:   ID,
 		Hash: "",

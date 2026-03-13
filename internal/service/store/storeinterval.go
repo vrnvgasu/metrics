@@ -24,8 +24,11 @@ func (s *Service) StoreInterval(ctx context.Context) error {
 }
 
 func (s *Service) flushOnFile(ctx context.Context) error {
-	list := s.storage.List(ctx)
-	if err := s.producer.WriteMetrics(&list); err != nil {
+	list, err := s.storage.List(ctx)
+	if err != nil {
+		return fmt.Errorf("s.StorageInterval List: %w", err)
+	}
+	if err = s.producer.WriteMetrics(&list); err != nil {
 		return fmt.Errorf("s.flush WriteMetrics: %w", err)
 	}
 

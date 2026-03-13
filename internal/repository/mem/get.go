@@ -7,8 +7,8 @@ import (
 	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
-func (ms *MemStorage) GetByTypeAndID(_ context.Context, mtype, id string) (*models.Metrics, error) {
-	m, ok := ms.metrics[id]
+func (s *Storage) GetByTypeAndID(_ context.Context, mtype, id string) (*models.Metrics, error) {
+	m, ok := s.metrics[id]
 	if !ok || m.MType != mtype {
 		return nil, repository.ErrNotFound
 	}

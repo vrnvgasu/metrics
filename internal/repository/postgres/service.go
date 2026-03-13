@@ -12,7 +12,7 @@ type Storage struct {
 	*sql.DB
 }
 
-func NewService() *Storage {
+func NewStorage() *Storage {
 	return &Storage{}
 }
 

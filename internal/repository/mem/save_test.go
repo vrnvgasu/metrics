@@ -18,32 +18,14 @@ func TestMemStorageAdd(t *testing.T) {
 		metrics         map[string]models.Metrics
 		m               models.Metrics
 		expectedMetrics map[string]models.Metrics
-		expectedErr     require.ErrorAssertionFunc
 	}{
 		{
-			name:    "no metrics; add gauge metric",
+			name:    "no metrics; add metric",
 			metrics: map[string]models.Metrics{},
-			m:       models.Metrics{ID: "1", MType: models.Gauge},
+			m:       models.Metrics{ID: "1", MType: "someMetric"},
 			expectedMetrics: map[string]models.Metrics{
-				"1": {ID: "1", MType: models.Gauge},
+				"1": {ID: "1", MType: "someMetric"},
 			},
-			expectedErr: require.NoError,
-		},
-		{
-			name:    "no metrics; add counter metric",
-			metrics: map[string]models.Metrics{},
-			m:       models.Metrics{ID: "1", MType: models.Counter},
-			expectedMetrics: map[string]models.Metrics{
-				"1": {ID: "1", MType: models.Counter},
-			},
-			expectedErr: require.NoError,
-		},
-		{
-			name:            "no metrics; add wrong metric",
-			metrics:         map[string]models.Metrics{},
-			m:               models.Metrics{ID: "1", MType: "dummy"},
-			expectedMetrics: map[string]models.Metrics{},
-			expectedErr:     require.Error,
 		},
 		{
 			name: "has metrics; rewrite gauge metric",
@@ -76,7 +58,6 @@ func TestMemStorageAdd(t *testing.T) {
 					Value: helper.NewRefFloat64(11),
 				},
 			},
-			expectedErr: require.NoError,
 		},
 		{
 			name: "has metrics; rewrite counter metric",
@@ -101,7 +82,7 @@ func TestMemStorageAdd(t *testing.T) {
 				"1": {
 					ID:    "1",
 					MType: models.Counter,
-					Delta: helper.NewRefInt64(3),
+					Delta: helper.NewRefInt64(2),
 				},
 				"11": {
 					ID:    "11",
@@ -109,7 +90,6 @@ func TestMemStorageAdd(t *testing.T) {
 					Delta: helper.NewRefInt64(11),
 				},
 			},
-			expectedErr: require.NoError,
 		},
 	}
 
@@ -118,12 +98,12 @@ func TestMemStorageAdd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := &MemStorage{
+			s := &Storage{
 				metrics: tt.metrics,
 			}
 
-			err := s.Add(context.Background(), &tt.m)
-			tt.expectedErr(t, err)
+			err := s.Save(context.Background(), &tt.m)
+			require.NoError(t, err)
 			for k, v := range tt.expectedMetrics {
 				m, ok := s.metrics[k]
 				require.True(t, ok)

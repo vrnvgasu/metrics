@@ -1,16 +1,14 @@
 package healthcheck
 
-import "context"
-
-type DBStorage interface {
-	Ping(context.Context) error
-}
+import (
+	"github.com/vrnvgasu/metrics/internal/repository"
+)
 
 type Service struct {
-	DB DBStorage
+	DB repository.Storage
 }
 
-func NewService(db DBStorage) *Service {
+func NewService(db repository.Storage) *Service {
 	return &Service{
 		DB: db,
 	}

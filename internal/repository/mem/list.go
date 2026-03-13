@@ -6,11 +6,11 @@ import (
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
-func (ms *MemStorage) List(_ context.Context) models.MetricsList {
-	list := make([]models.Metrics, 0, len(ms.metrics))
-	for _, m := range ms.metrics {
+func (s *Storage) List(_ context.Context) (models.MetricsList, error) {
+	list := make([]models.Metrics, 0, len(s.metrics))
+	for _, m := range s.metrics {
 		list = append(list, m)
 	}
 
-	return list
+	return list, nil
 }

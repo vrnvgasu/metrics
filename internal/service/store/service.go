@@ -6,32 +6,36 @@ import (
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
+	"github.com/vrnvgasu/metrics/internal/repository"
 	"github.com/vrnvgasu/metrics/internal/service/store/provider"
 )
 
-type Storage interface {
-	List(context.Context) models.MetricsList
-	Add(context.Context, *models.Metrics) error
+type MetricService interface {
+	CreateOrUpdate(ctx context.Context, m *models.Metrics) error
 }
 
 type Service struct {
 	stop bool
 
-	storage  Storage
-	cnf      config.ServerCnf
-	producer *provider.Producer
+	storage       repository.Storage
+	cnf           config.ServerCnf
+	producer      *provider.Producer
+	metricService MetricService
 }
 
-func NewService(storage Storage, cnf config.ServerCnf) (*Service, error) {
+func NewService(
+	storage repository.Storage, ms MetricService, cnf config.ServerCnf,
+) (*Service, error) {
 	p, err := provider.NewProducer(cnf.FileStoragePath)
 	if err != nil {
 		return nil, fmt.Errorf("server.StoreInterval NewProducer: %w", err)
 	}
 
 	return &Service{
-		storage:  storage,
-		cnf:      cnf,
-		producer: p,
+		storage:       storage,
+		cnf:           cnf,
+		producer:      p,
+		metricService: ms,
 	}, nil
 }
 

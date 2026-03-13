@@ -89,7 +89,7 @@ func TestGetByTypeAndID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := &MemStorage{
+			s := &Storage{
 				metrics: tt.mMap,
 			}
 			m, err := s.GetByTypeAndID(context.Background(), tt.mtype, tt.id)

@@ -26,13 +26,13 @@ func TestValue(t *testing.T) {
 	ctx := context.Background()
 
 	repo := mem.NewMemStorage()
-	err := repo.Add(ctx, &models.Metrics{
+	err := repo.Save(ctx, &models.Metrics{
 		ID:    "1",
 		MType: models.Gauge,
 		Value: helper.NewRefFloat64(842315.916000),
 	})
 	require.NoError(t, err)
-	err = repo.Add(ctx, &models.Metrics{
+	err = repo.Save(ctx, &models.Metrics{
 		ID:    "2",
 		MType: models.Counter,
 		Delta: helper.NewRefInt64(11),

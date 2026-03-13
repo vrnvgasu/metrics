@@ -23,13 +23,13 @@ func TestStoreInterval(t *testing.T) {
 
 	tests := []struct {
 		name string
-		repo func() (*mem.MemStorage, error)
+		repo func() (*mem.Storage, error)
 	}{
 		{
 			name: "save list",
-			repo: func() (*mem.MemStorage, error) {
+			repo: func() (*mem.Storage, error) {
 				repo := mem.NewMemStorage()
-				err := repo.Add(ctx, &models.Metrics{
+				err := repo.Save(ctx, &models.Metrics{
 					ID:    "1",
 					MType: models.Gauge,
 					Value: helper.NewRefFloat64(842315.916000),
@@ -43,7 +43,7 @@ func TestStoreInterval(t *testing.T) {
 		},
 		{
 			name: "save empty",
-			repo: func() (*mem.MemStorage, error) {
+			repo: func() (*mem.Storage, error) {
 				return mem.NewMemStorage(), nil
 			},
 		},
@@ -61,7 +61,7 @@ func TestStoreInterval(t *testing.T) {
 			repo, err := tt.repo()
 			require.NoError(t, err)
 
-			service, err := NewService(repo, config.ServerCnf{
+			service, err := NewService(repo, nil, config.ServerCnf{
 				StoreInterval:   1,
 				FileStoragePath: fileName,
 			})
@@ -76,7 +76,9 @@ func TestStoreInterval(t *testing.T) {
 			bytes, err := io.ReadAll(file)
 			require.NoError(t, err)
 
-			expected, err := json.Marshal(repo.List(ctx))
+			list, err := repo.List(ctx)
+			require.NoError(t, err)
+			expected, err := json.Marshal(list)
 			require.NoError(t, err)
 			require.JSONEq(t, string(expected), string(bytes))
 

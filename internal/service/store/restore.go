@@ -23,8 +23,8 @@ func (s *Service) Restore(ctx context.Context) error {
 	}
 
 	for _, m := range list {
-		if err = s.storage.Add(ctx, &m); err != nil {
-			return fmt.Errorf("server.Restore Add: %w", err)
+		if err = s.metricService.CreateOrUpdate(ctx, &m); err != nil {
+			return fmt.Errorf("server.Restore CreateOrUpdate: %w", err)
 		}
 	}
 
