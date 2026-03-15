@@ -10,6 +10,7 @@ import (
 
 type Storage struct {
 	*sql.DB
+	*sql.Tx
 }
 
 func NewStorage() *Storage {

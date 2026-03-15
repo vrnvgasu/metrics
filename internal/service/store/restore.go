@@ -22,10 +22,8 @@ func (s *Service) Restore(ctx context.Context) error {
 		return fmt.Errorf("server.Restore ReadMetrics: %w", err)
 	}
 
-	for _, m := range list {
-		if err = s.metricService.CreateOrUpdate(ctx, &m); err != nil {
-			return fmt.Errorf("server.Restore CreateOrUpdate: %w", err)
-		}
+	if err = s.metricService.CreateOrUpdate(ctx, list); err != nil {
+		return fmt.Errorf("server.Restore CreateOrUpdate: %w", err)
 	}
 
 	return nil

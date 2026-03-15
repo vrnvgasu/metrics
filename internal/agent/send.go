@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	path = "update"
+	path       = "updates"
+	batchCount = 100
 )
 
 type ServerNotAvailableError struct {
@@ -39,6 +40,8 @@ func (e *ServerNotAvailableError) Unwrap() error {
 }
 
 func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
+	batch := make([]*models.Metrics, 0, batchCount)
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -52,7 +55,12 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 				break
 			}
 
-			if err := a.SendMetric(*m, cnf.Address); err != nil {
+			batch = append(batch, m)
+			if len(batch) < batchCount {
+				continue
+			}
+
+			if err := a.SendMetric(batch, cnf.Address); err != nil {
 				var availableErr *ServerNotAvailableError
 				if !errors.As(err, &availableErr) {
 					return fmt.Errorf("sending metric: %w", err)
@@ -65,7 +73,7 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 	}
 }
 
-func (a *Agent) SendMetric(m models.Metrics, address string) error {
+func (a *Agent) SendMetric(m []*models.Metrics, address string) error {
 	body, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("marshaling metric: %w", err)

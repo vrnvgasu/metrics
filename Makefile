@@ -11,6 +11,11 @@ test:
 	@echo "test"
 	@go test ./... -v
 
+.PHONY: generate
+generate:
+	@echo "generate"
+	@go generate ./...
+
 .PHONY: infra-up
 infra-up:
 	@echo "local-up"

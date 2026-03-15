@@ -34,7 +34,29 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 
-	if err := h.MetricService.CreateOrUpdate(c, body.ToMetrics()); err != nil {
+	if err := h.MetricService.CreateOrUpdate(c, []*models.Metrics{body.ToMetrics()}); err != nil {
+		h.responseError(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, http.NoBody)
+}
+
+func (h *Handler) UpdateJSONList(c *gin.Context) {
+	var body []UpdateJSONRequest
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
+
+		return
+	}
+
+	metrics := make([]*models.Metrics, 0, len(body))
+	for _, v := range body {
+		metrics = append(metrics, v.ToMetrics())
+	}
+	if err := h.MetricService.CreateOrUpdate(c, metrics); err != nil {
 		h.responseError(c, err)
 
 		return

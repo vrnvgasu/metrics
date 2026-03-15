@@ -12,7 +12,7 @@ import (
 )
 
 type MetricService interface {
-	CreateOrUpdate(context.Context, *models.Metrics) error
+	CreateOrUpdate(context.Context, []*models.Metrics) error
 	FindByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error)
 	AllMetrics(context.Context) (models.MetricsList, error)
 }

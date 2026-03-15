@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
@@ -10,7 +11,17 @@ import (
 func (s *Storage) List(ctx context.Context) (models.MetricsList, error) {
 	list := make(models.MetricsList, 0)
 	q := `select * from metrics`
-	rows, err := s.DB.QueryContext(ctx, q)
+
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if s.Tx != nil {
+		rows, err = s.Tx.QueryContext(ctx, q)
+	} else {
+		rows, err = s.DB.QueryContext(ctx, q)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("postgres.List QueryContext: %w", err)
 	}

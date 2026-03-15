@@ -32,7 +32,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if err = h.MetricService.CreateOrUpdate(c, &metric); err != nil {
+	if err = h.MetricService.CreateOrUpdate(c, []*models.Metrics{&metric}); err != nil {
 		h.responseError(c, err)
 
 		return
