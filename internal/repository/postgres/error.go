@@ -43,6 +43,21 @@ func ClassifyPgError(pgErr *pgconn.PgError) PGErrorClassification {
 		pgerrcode.ConnectionDoesNotExist,
 		pgerrcode.ConnectionFailure:
 		return Retriable
+
+		// Класс 40 - Откат транзакции
+	case pgerrcode.TransactionRollback, // 40000
+		pgerrcode.SerializationFailure, // 40001
+		pgerrcode.DeadlockDetected:     // 40P01
+		return Retriable
+
+		// Класс 53 - Insufficient Resources
+	case pgerrcode.TooManyConnections: // 53300
+		return Retriable
+
+		// Класс 57 - Ошибка оператора
+	case pgerrcode.CannotConnectNow, // 57P03
+		pgerrcode.AdminShutdown: // 57P01
+		return Retriable
 	default:
 		return NonRetriable
 	}

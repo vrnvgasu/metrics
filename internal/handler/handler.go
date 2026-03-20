@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
@@ -52,6 +53,11 @@ func (h *Handler) responseError(c *gin.Context, err error) {
 	case errors.As(err, &serviceError):
 		h.parseServiceError(c, serviceError)
 	default:
+		logger.Log.Errorw("http request",
+			"uri", c.Request.RequestURI,
+			"method", c.Request.Method,
+			"error", err,
+		)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError{
 			Message:  string(serviceerrors.ErrInternal),
 			HTTPCode: http.StatusInternalServerError,
