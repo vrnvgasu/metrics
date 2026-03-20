@@ -16,7 +16,5 @@ type Storage interface {
 	GetByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error)
 	Ping(context.Context) error
 
-	WithTx(ctx context.Context) (Storage, error)
-	Commit() error
-	Rollback() error
+	DoInTransaction(ctx context.Context, fn func(context.Context) error) error
 }

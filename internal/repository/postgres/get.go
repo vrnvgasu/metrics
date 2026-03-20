@@ -11,17 +11,9 @@ import (
 )
 
 func (s *Storage) GetByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error) {
-	var (
-		m   models.Metrics
-		err error
-	)
-	q := `select * from metrics where type = $1 and id = $2 limit 1`
-
-	if s.Tx != nil {
-		err = s.Tx.QueryRowContext(ctx, q, mtype, id).Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
-	} else {
-		err = s.DB.QueryRowContext(ctx, q, mtype, id).Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
-	}
+	var m models.Metrics
+	q := `select metric_id, type, delta, value, hash from metrics where type = $1 and metric_id = $2 limit 1`
+	err := s.getDB(ctx).QueryRowContext(ctx, q, mtype, id).Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, repository.ErrNotFound

@@ -11,7 +11,7 @@ import (
 	mockrepository "github.com/vrnvgasu/metrics/internal/repository/mocks"
 )
 
-func TestMemStorageAdd(t *testing.T) {
+func Test_createOrUpdate(t *testing.T) {
 	t.Parallel()
 
 	controller := gomock.NewController(t)
@@ -29,8 +29,6 @@ func TestMemStorageAdd(t *testing.T) {
 			storage: func() repository.Storage {
 				storageMock := mockrepository.NewMockStorage(controller)
 				storageMock.EXPECT().Save(gomock.Any(), gomock.Any()).Return(nil)
-				storageMock.EXPECT().WithTx(gomock.Any()).Return(storageMock, nil)
-				storageMock.EXPECT().Commit().Return(nil)
 
 				return storageMock
 			},
@@ -43,8 +41,6 @@ func TestMemStorageAdd(t *testing.T) {
 				storageMock := mockrepository.NewMockStorage(controller)
 				storageMock.EXPECT().GetByTypeAndID(gomock.Any(), models.Counter, "1").Return(nil, repository.ErrNotFound)
 				storageMock.EXPECT().Save(gomock.Any(), gomock.Any()).Return(nil)
-				storageMock.EXPECT().WithTx(gomock.Any()).Return(storageMock, nil)
-				storageMock.EXPECT().Commit().Return(nil)
 
 				return storageMock
 			},
@@ -55,8 +51,6 @@ func TestMemStorageAdd(t *testing.T) {
 			m:    models.Metrics{ID: "1", MType: "dummy"},
 			storage: func() repository.Storage {
 				storageMock := mockrepository.NewMockStorage(controller)
-				storageMock.EXPECT().WithTx(gomock.Any()).Return(storageMock, nil)
-				storageMock.EXPECT().Rollback().Return(nil)
 
 				return storageMock
 			},
@@ -73,7 +67,7 @@ func TestMemStorageAdd(t *testing.T) {
 				storage: tt.storage(),
 			}
 
-			err := s.CreateOrUpdate(t.Context(), []*models.Metrics{&tt.m})
+			err := s.createOrUpdate(t.Context(), []*models.Metrics{&tt.m})
 			tt.expectedErr(t, err)
 		})
 	}

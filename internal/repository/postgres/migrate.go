@@ -24,7 +24,7 @@ func (s *Storage) Migrate(ctx context.Context) error {
 		return fmt.Errorf("postgres.Migrate SetDialect: %w", err)
 	}
 
-	if err := goose.UpContext(ctx, s.DB, "."); err != nil {
+	if err := goose.UpContext(ctx, s.db, "."); err != nil {
 		return fmt.Errorf("postgres.Migrate Up: %w", err)
 	}
 

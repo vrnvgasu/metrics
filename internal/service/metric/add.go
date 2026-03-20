@@ -9,47 +9,46 @@ import (
 	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
-func (s *Service) CreateOrUpdate(ctx context.Context, list []*models.Metrics) (err error) {
-	txStorage, err := s.storage.WithTx(ctx)
+func (s *Service) CreateOrUpdate(ctx context.Context, list []*models.Metrics) error {
+	err := s.storage.DoInTransaction(ctx, func(ctx context.Context) error {
+		return s.createOrUpdate(ctx, list)
+	})
+
 	if err != nil {
-		return fmt.Errorf("metric.CreateOrUpdateList WithTx: %w", err)
+		return fmt.Errorf("metric.CreateOrUpdate DoInTransaction: %w", err)
 	}
 
-Loop:
+	return nil
+}
+
+func (s *Service) createOrUpdate(ctx context.Context, list []*models.Metrics) error {
 	for _, m := range list {
 		switch m.MType {
 		case models.Gauge:
-			if err = s.addGauge(ctx, txStorage, m); err != nil {
-				break Loop
+			if err := s.addGauge(ctx, m); err != nil {
+				return fmt.Errorf("metric.createOrUpdate addGauge: %w", err)
 			}
 		case models.Counter:
-			if err = s.addCounter(ctx, txStorage, m); err != nil {
-				break Loop
+			if err := s.addCounter(ctx, m); err != nil {
+				return fmt.Errorf("metric.createOrUpdate addCounter: %w", err)
 			}
 		default:
-			err = fmt.Errorf("metrics type %s not supported: %w", m.MType, repository.ErrNotSupport)
-			break Loop
+			return fmt.Errorf("metrics type %s not supported: %w", m.MType, repository.ErrNotSupport)
 		}
 	}
 
-	if err != nil {
-		txStorage.Rollback()
-
-		return err
-	}
-
-	return txStorage.Commit()
+	return nil
 }
 
-func (s *Service) addGauge(ctx context.Context, storage repository.Storage, m *models.Metrics) error {
-	return storage.Save(ctx, m)
+func (s *Service) addGauge(ctx context.Context, m *models.Metrics) error {
+	return s.storage.Save(ctx, m)
 }
 
-func (s *Service) addCounter(ctx context.Context, storage repository.Storage, m *models.Metrics) error {
-	oldM, err := storage.GetByTypeAndID(ctx, m.MType, m.ID)
+func (s *Service) addCounter(ctx context.Context, m *models.Metrics) error {
+	oldM, err := s.storage.GetByTypeAndID(ctx, m.MType, m.ID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			return storage.Save(ctx, m)
+			return s.storage.Save(ctx, m)
 		}
 
 		return fmt.Errorf("metric.addCounter GetByTypeAndID: %w", err)
@@ -59,5 +58,5 @@ func (s *Service) addCounter(ctx context.Context, storage repository.Storage, m 
 	oldDelta += *m.Delta
 	oldM.Delta = &oldDelta
 
-	return storage.Save(ctx, oldM)
+	return s.storage.Save(ctx, oldM)
 }

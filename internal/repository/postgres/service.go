@@ -6,13 +6,16 @@ import (
 	"fmt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-
-	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
+type DB interface {
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+}
+
 type Storage struct {
-	*sql.DB
-	*sql.Tx
+	db *sql.DB
 }
 
 func NewStorage() *Storage {
@@ -22,57 +25,28 @@ func NewStorage() *Storage {
 func (s *Storage) Start(ctx context.Context, dsn string) (err error) {
 	classifier := NewPostgresErrorClassifier()
 
-	err = serviceerrors.Retry(func() error {
-		s.DB, err = sql.Open("pgx", dsn)
-		if err != nil {
-			if classifier.Classify(err) == NonRetriable {
-				return err
-			}
+	err = WithRetry(func() error {
+		s.db, err = sql.Open("pgx", dsn)
 
-			return serviceerrors.NewRetryableError(err)
-		}
-
-		return nil
-	})
+		return err
+	}, classifier)
 	if err != nil {
-		return fmt.Errorf("postgres service.Start Open: %w", err)
+		return fmt.Errorf("postgres.Start Open: %w", err)
 	}
 
-	err = serviceerrors.Retry(func() error {
-		err = s.DB.PingContext(ctx)
-		if err != nil {
-			if classifier.Classify(err) == NonRetriable {
-				return err
-			}
-
-			return serviceerrors.NewRetryableError(err)
-		}
-
-		return nil
-	})
+	err = WithRetry(func() error { return s.db.PingContext(ctx) }, classifier)
 	if err != nil {
-		return fmt.Errorf("postgres service.Start Ping: %w", err)
+		return fmt.Errorf("postgres.Start Ping: %w", err)
 	}
 
-	err = serviceerrors.Retry(func() error {
-		err = s.Migrate(ctx)
-		if err != nil {
-			if classifier.Classify(err) == NonRetriable {
-				return err
-			}
-
-			return serviceerrors.NewRetryableError(err)
-		}
-
-		return nil
-	})
+	err = WithRetry(func() error { return s.Migrate(ctx) }, classifier)
 	if err != nil {
-		return fmt.Errorf("postgres service.Start Migrate: %w", err)
+		return fmt.Errorf("postgres.Start Migrate: %w", err)
 	}
 
 	return nil
 }
 
 func (s *Storage) Stop() error {
-	return s.DB.Close()
+	return s.db.Close()
 }

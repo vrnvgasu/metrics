@@ -14,7 +14,6 @@ import (
 	reflect "reflect"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	repository "github.com/vrnvgasu/metrics/internal/repository"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,18 +41,18 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
 }
 
-// Commit mocks base method.
-func (m *MockStorage) Commit() error {
+// DoInTransaction mocks base method.
+func (m *MockStorage) DoInTransaction(ctx context.Context, fn func(context.Context) error) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Commit")
+	ret := m.ctrl.Call(m, "DoInTransaction", ctx, fn)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Commit indicates an expected call of Commit.
-func (mr *MockStorageMockRecorder) Commit() *gomock.Call {
+// DoInTransaction indicates an expected call of DoInTransaction.
+func (mr *MockStorageMockRecorder) DoInTransaction(ctx, fn any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockStorage)(nil).Commit))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoInTransaction", reflect.TypeOf((*MockStorage)(nil).DoInTransaction), ctx, fn)
 }
 
 // GetByTypeAndID mocks base method.
@@ -100,20 +99,6 @@ func (mr *MockStorageMockRecorder) Ping(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockStorage)(nil).Ping), arg0)
 }
 
-// Rollback mocks base method.
-func (m *MockStorage) Rollback() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Rollback")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Rollback indicates an expected call of Rollback.
-func (mr *MockStorageMockRecorder) Rollback() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStorage)(nil).Rollback))
-}
-
 // Save mocks base method.
 func (m_2 *MockStorage) Save(ctx context.Context, m *models.Metrics) error {
 	m_2.ctrl.T.Helper()
@@ -126,19 +111,4 @@ func (m_2 *MockStorage) Save(ctx context.Context, m *models.Metrics) error {
 func (mr *MockStorageMockRecorder) Save(ctx, m any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockStorage)(nil).Save), ctx, m)
-}
-
-// WithTx mocks base method.
-func (m *MockStorage) WithTx(ctx context.Context) (repository.Storage, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithTx", ctx)
-	ret0, _ := ret[0].(repository.Storage)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WithTx indicates an expected call of WithTx.
-func (mr *MockStorageMockRecorder) WithTx(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTx", reflect.TypeOf((*MockStorage)(nil).WithTx), ctx)
 }

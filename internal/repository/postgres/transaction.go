@@ -2,27 +2,46 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-
-	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
-func (s *Storage) WithTx(_ context.Context) (repository.Storage, error) {
-	tx, err := s.DB.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("postgres.BeginTx Begin: %w", err)
+type txKey struct{}
+
+func (s *Storage) DoInTransaction(ctx context.Context, fn func(context.Context) error) error {
+	if _, ok := ctx.Value(txKey{}).(*sql.Tx); ok {
+		return fn(ctx)
 	}
 
-	return &Storage{
-		DB: s.DB,
-		Tx: tx,
-	}, nil
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("postgres.DoInTransaction BeginTx: %w", err)
+	}
+
+	txCtx := context.WithValue(ctx, txKey{}, tx)
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+
+			panic(p)
+		}
+	}()
+
+	// Выполняем функцию с транзакцией в контексте
+	if err = fn(txCtx); err != nil {
+		tx.Rollback()
+
+		return fmt.Errorf("postgres.DoInTransaction do fn: %w", err)
+	}
+
+	return tx.Commit()
 }
 
-func (s *Storage) Commit() error {
-	return s.Tx.Commit()
-}
+func (s *Storage) getDB(ctx context.Context) DB {
+	if tx, ok := ctx.Value(txKey{}).(*sql.Tx); ok && tx != nil {
+		return tx
+	}
 
-func (s *Storage) Rollback() error {
-	return s.Tx.Rollback()
+	return s.db
 }
