@@ -20,14 +20,14 @@ func (h *Handler) Update(c *gin.Context) {
 
 	var req UpdateRequest
 	if err := c.ShouldBindUri(&req); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
+		h.responseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
 
 	metric, err := models.NewMetricsFromStrings(req.MType, req.Name, req.Value)
 	if err != nil {
-		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
+		h.responseError(c, serviceerrors.BadRequestError())
 
 		return
 	}

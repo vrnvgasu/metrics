@@ -29,7 +29,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	var body UpdateJSONRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
+		h.responseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
@@ -47,7 +47,7 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 	var body []UpdateJSONRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
+		h.responseError(c, serviceerrors.BadRequestError())
 
 		return
 	}

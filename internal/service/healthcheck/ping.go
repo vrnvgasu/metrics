@@ -8,7 +8,7 @@ import (
 
 func (s *Service) CheckPing(ctx context.Context) error {
 	if err := s.DB.Ping(ctx); err != nil {
-		return serviceerrors.InternalError("healthcheck: service unavailable")
+		return serviceerrors.InternalError()
 	}
 
 	return nil

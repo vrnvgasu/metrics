@@ -17,7 +17,6 @@ const (
 
 type ServiceError struct {
 	Type        ServiceErrorType
-	Title       string
 	Message     string
 	HTTPCode    int
 	SourceError error
@@ -25,45 +24,41 @@ type ServiceError struct {
 
 func (s *ServiceError) Error() string {
 	if s.SourceError != nil {
-		return fmt.Sprintf("[%s] - %s: %s, error: %s", s.Type, s.Title, s.Message, s.SourceError)
+		return fmt.Sprintf("[%s]: %s, error: %s", s.Type, s.Message, s.SourceError)
 	}
 
-	return fmt.Sprintf("[%s] - %s: %s", s.Type, s.Title, s.Message)
+	return fmt.Sprintf("[%s]: %s", s.Type, s.Message)
 }
 
-func NotFoundError(err error, message string) error {
+func NotFoundError(err error) error {
 	return &ServiceError{
 		Type:        ErrNotFound,
-		Title:       "Not found",
+		Message:     http.StatusText(http.StatusNotFound),
 		HTTPCode:    http.StatusNotFound,
-		Message:     message,
 		SourceError: err,
 	}
 }
 
-func UnprocessableEntity(message string) error {
+func UnprocessableEntity() error {
 	return &ServiceError{
 		Type:     ErrUnprocessableEntity,
-		Title:    "Unprocessable entity",
-		Message:  message,
+		Message:  http.StatusText(http.StatusUnprocessableEntity),
 		HTTPCode: http.StatusUnprocessableEntity,
 	}
 }
 
-func BadRequestError(message string) error {
+func BadRequestError() error {
 	return &ServiceError{
 		Type:     ErrBadRequest,
-		Title:    "Bad request",
-		Message:  message,
+		Message:  http.StatusText(http.StatusBadRequest),
 		HTTPCode: http.StatusBadRequest,
 	}
 }
 
-func InternalError(message string) error {
+func InternalError() error {
 	return &ServiceError{
 		Type:     ErrInternal,
-		Title:    "Internal Server Error",
-		Message:  message,
+		Message:  http.StatusText(http.StatusInternalServerError),
 		HTTPCode: http.StatusInternalServerError,
 	}
 }

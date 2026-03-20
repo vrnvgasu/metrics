@@ -23,11 +23,10 @@ type HealthService interface {
 }
 
 type ResponseError struct {
-	Code     string `json:"code"`
-	HTTPCode int    `json:"httpCode"`
-	Title    string `json:"title"`
-	Message  string `json:"message"`
-	Error    string `json:"error,omitempty"`
+	Code        string `json:"code"`
+	HTTPCode    int    `json:"http_code"`
+	UserMessage string `json:"user_message"`
+	Error       string `json:"error,omitempty"`
 }
 
 type Handler struct {
@@ -59,9 +58,8 @@ func (h *Handler) responseError(c *gin.Context, err error) {
 			"error", err,
 		)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError{
-			Message:  string(serviceerrors.ErrInternal),
-			HTTPCode: http.StatusInternalServerError,
-			Title:    "Unhandled error",
+			HTTPCode:    http.StatusInternalServerError,
+			UserMessage: "Unhandled error",
 		})
 	}
 }
@@ -73,10 +71,9 @@ func (h *Handler) parseServiceError(c *gin.Context, err *serviceerrors.ServiceEr
 	}
 
 	c.AbortWithStatusJSON(err.HTTPCode, ResponseError{
-		Code:     string(err.Type),
-		HTTPCode: err.HTTPCode,
-		Title:    err.Title,
-		Message:  err.Message,
-		Error:    sourceError,
+		Code:        string(err.Type),
+		HTTPCode:    err.HTTPCode,
+		UserMessage: err.Message,
+		Error:       sourceError,
 	})
 }
