@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/vrnvgasu/metrics/internal/agent"
+	"github.com/vrnvgasu/metrics/pkg/retry"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func run() error {
 
 	bufSize := cnf.ReportInterval / cnf.PollInterval * 100
 
-	agentClient := agent.NewAgent(&http.Client{}, bufSize)
+	agentClient := agent.NewAgent(retry.NewClient(nil), bufSize)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 

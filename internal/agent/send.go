@@ -4,16 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
-	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 	"github.com/vrnvgasu/metrics/pkg/compress"
 )
 
@@ -43,19 +40,7 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 				continue
 			}
 
-			err := serviceerrors.Retry(func() error {
-				if err := a.SendMetric(batch, cnf.Address); err != nil {
-					var urlErr *url.Error
-					if errors.As(err, &urlErr) {
-						return serviceerrors.NewRetryableError(err)
-					}
-
-					return err
-				}
-
-				return nil
-			})
-			if err != nil {
+			if err := a.SendMetric(batch, cnf.Address); err != nil {
 				return fmt.Errorf("sending metric: %w", err)
 			}
 		}
