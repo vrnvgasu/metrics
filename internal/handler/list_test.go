@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestList(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	repo := mem.NewMemStorage()
 	err := repo.Save(ctx, &models.Metrics{

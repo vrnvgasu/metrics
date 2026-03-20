@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,7 @@ import (
 
 func TestFind(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	repo := mem.NewMemStorage()
 	err := repo.Save(ctx, &models.Metrics{

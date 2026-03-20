@@ -41,7 +41,7 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 			}
 
 			if err := a.SendMetric(batch, cnf.Address); err != nil {
-				return fmt.Errorf("sending metric: %w", err)
+				return fmt.Errorf("agent.SendMetrics SendMetric: %w", err)
 			}
 		}
 		time.Sleep(time.Duration(cnf.ReportInterval) * time.Second)
@@ -51,30 +51,30 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 func (a *Agent) SendMetric(m []*models.Metrics, address string) error {
 	body, err := json.Marshal(m)
 	if err != nil {
-		return fmt.Errorf("marshaling metric: %w", err)
+		return fmt.Errorf("agent.SendMetric Marshal: %w", err)
 	}
 
 	cBody, err := compress.GzipCompress(body)
 	if err != nil {
-		return fmt.Errorf("compressing metric: %w", err)
+		return fmt.Errorf("agent.SendMetric GzipCompress: %w", err)
 	}
 
 	updateURL := fmt.Sprintf("http://%s/%s", address, path)
 	req, err := http.NewRequest(http.MethodPost, updateURL, bytes.NewBuffer(cBody))
 	if err != nil {
-		return fmt.Errorf("creating request: %w", err)
+		return fmt.Errorf("agent.SendMetric NewRequest: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 	resp, err := a.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("agent.SendMetric Do: %w", err)
 	}
 
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
-		return fmt.Errorf("read body: %w", err)
+		return fmt.Errorf("agent.SendMetric Copy: %w", err)
 	}
 	defer resp.Body.Close()
 

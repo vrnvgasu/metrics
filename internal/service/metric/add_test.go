@@ -1,7 +1,6 @@
 package metric
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -74,7 +73,7 @@ func TestMemStorageAdd(t *testing.T) {
 				storage: tt.storage(),
 			}
 
-			err := s.CreateOrUpdate(context.Background(), []*models.Metrics{&tt.m})
+			err := s.CreateOrUpdate(t.Context(), []*models.Metrics{&tt.m})
 			tt.expectedErr(t, err)
 		})
 	}

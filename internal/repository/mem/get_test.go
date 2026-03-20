@@ -1,7 +1,6 @@
 package mem
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -92,7 +91,7 @@ func TestGetByTypeAndID(t *testing.T) {
 			s := &Storage{
 				metrics: tt.mMap,
 			}
-			m, err := s.GetByTypeAndID(context.Background(), tt.mtype, tt.id)
+			m, err := s.GetByTypeAndID(t.Context(), tt.mtype, tt.id)
 			tt.err(t, err)
 			if err == nil {
 				require.Equal(t, tt.expectedM, *m)

@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -111,7 +110,7 @@ func TestUpdateJSON(t *testing.T) {
 
 			if res.StatusCode == http.StatusOK {
 				req := tt.body.(UpdateJSONRequest)
-				metric, err := repo.GetByTypeAndID(context.Background(), req.MType, req.ID)
+				metric, err := repo.GetByTypeAndID(t.Context(), req.MType, req.ID)
 				require.NoError(t, err)
 				assert.NotEmpty(t, metric.ID)
 				assert.Equal(t, req.ID, metric.ID)
@@ -163,7 +162,7 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 	res.Body.Close()
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	metric, err := repo.GetByTypeAndID(context.Background(), updateRequest.MType, updateRequest.ID)
+	metric, err := repo.GetByTypeAndID(t.Context(), updateRequest.MType, updateRequest.ID)
 	require.NoError(t, err)
 	assert.NotEmpty(t, metric.ID)
 	assert.Equal(t, updateRequest.ID, metric.ID)

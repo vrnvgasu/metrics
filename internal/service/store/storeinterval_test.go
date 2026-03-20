@@ -19,7 +19,7 @@ import (
 func TestStoreInterval(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name string
@@ -55,7 +55,7 @@ func TestStoreInterval(t *testing.T) {
 			t.Parallel()
 			fileName := tt.name + "_testStoreInterval.json"
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
 			defer cancel()
 
 			repo, err := tt.repo()

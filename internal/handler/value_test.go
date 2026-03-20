@@ -3,7 +3,6 @@ package handler
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -23,7 +22,7 @@ func TestValue(t *testing.T) {
 
 	const path = "/value"
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	repo := mem.NewMemStorage()
 	err := repo.Save(ctx, &models.Metrics{
