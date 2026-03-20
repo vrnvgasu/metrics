@@ -17,9 +17,6 @@ func initStorage(ctx context.Context, cnf *config.ServerCnf) (dbStorage reposito
 		if err = provider.Start(ctx, cnf.DatabaseDSN); err != nil {
 			return nil, fmt.Errorf("init storage postgres start: %w", err)
 		}
-		if err = provider.Migrate(ctx); err != nil {
-			return nil, fmt.Errorf("init storage postgres migrate: %w", err)
-		}
 
 		return provider, nil
 	default:

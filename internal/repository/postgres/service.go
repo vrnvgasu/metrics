@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	seriveerrors "github.com/vrnvgasu/metrics/internal/service/errors"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type Storage struct {
@@ -22,14 +22,14 @@ func NewStorage() *Storage {
 func (s *Storage) Start(ctx context.Context, dsn string) (err error) {
 	classifier := NewPostgresErrorClassifier()
 
-	err = seriveerrors.Retry(func() error {
+	err = serviceerrors.Retry(func() error {
 		s.DB, err = sql.Open("pgx", dsn)
 		if err != nil {
 			if classifier.Classify(err) == NonRetriable {
 				return err
 			}
 
-			return seriveerrors.NewRetryableError(err)
+			return serviceerrors.NewRetryableError(err)
 		}
 
 		return nil
@@ -38,20 +38,36 @@ func (s *Storage) Start(ctx context.Context, dsn string) (err error) {
 		return fmt.Errorf("postgres service.Start Open: %w", err)
 	}
 
-	err = seriveerrors.Retry(func() error {
+	err = serviceerrors.Retry(func() error {
 		err = s.DB.PingContext(ctx)
 		if err != nil {
 			if classifier.Classify(err) == NonRetriable {
 				return err
 			}
 
-			return seriveerrors.NewRetryableError(err)
+			return serviceerrors.NewRetryableError(err)
 		}
 
 		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("postgres service.Start Ping: %w", err)
+	}
+
+	err = serviceerrors.Retry(func() error {
+		err = s.Migrate(ctx)
+		if err != nil {
+			if classifier.Classify(err) == NonRetriable {
+				return err
+			}
+
+			return serviceerrors.NewRetryableError(err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("postgres service.Start Migrate: %w", err)
 	}
 
 	return nil

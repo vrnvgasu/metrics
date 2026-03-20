@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	seriveerrors "github.com/vrnvgasu/metrics/internal/service/errors"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type FindRequest struct {
@@ -18,7 +18,7 @@ func (h *Handler) Find(c *gin.Context) {
 
 	var req FindRequest
 	if err := c.ShouldBindUri(&req); err != nil {
-		h.responseError(c, seriveerrors.BadRequestError(err.Error()))
+		h.responseError(c, serviceerrors.BadRequestError(err.Error()))
 
 		return
 	}

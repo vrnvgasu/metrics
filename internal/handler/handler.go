@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	seriveerrors "github.com/vrnvgasu/metrics/internal/service/errors"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type MetricService interface {
@@ -46,21 +46,21 @@ func (h *Handler) responseError(c *gin.Context, err error) {
 		_ = c.Error(err)
 	}
 
-	var serviceError *seriveerrors.ServiceError
+	var serviceError *serviceerrors.ServiceError
 
 	switch {
 	case errors.As(err, &serviceError):
 		h.parseServiceError(c, serviceError)
 	default:
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError{
-			Message:  string(seriveerrors.ErrInternal),
+			Message:  string(serviceerrors.ErrInternal),
 			HTTPCode: http.StatusInternalServerError,
 			Title:    "Unhandled error",
 		})
 	}
 }
 
-func (h *Handler) parseServiceError(c *gin.Context, err *seriveerrors.ServiceError) {
+func (h *Handler) parseServiceError(c *gin.Context, err *serviceerrors.ServiceError) {
 	sourceError := ""
 	if err.SourceError != nil {
 		sourceError = err.SourceError.Error()
