@@ -1,4 +1,4 @@
-package service
+package store
 
 import (
 	"context"
@@ -12,22 +12,24 @@ import (
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
 func TestStoreInterval(t *testing.T) {
 	t.Parallel()
 
+	ctx := t.Context()
+
 	tests := []struct {
 		name string
-		repo func() (*repository.MemStorage, error)
+		repo func() (*mem.Storage, error)
 	}{
 		{
 			name: "save list",
-			repo: func() (*repository.MemStorage, error) {
-				repo := repository.NewMemStorage()
-				err := repo.Add(models.Metrics{
+			repo: func() (*mem.Storage, error) {
+				repo := mem.NewMemStorage()
+				err := repo.Save(ctx, &models.Metrics{
 					ID:    "1",
 					MType: models.Gauge,
 					Value: helper.NewRefFloat64(842315.916000),
@@ -41,8 +43,8 @@ func TestStoreInterval(t *testing.T) {
 		},
 		{
 			name: "save empty",
-			repo: func() (*repository.MemStorage, error) {
-				return repository.NewMemStorage(), nil
+			repo: func() (*mem.Storage, error) {
+				return mem.NewMemStorage(), nil
 			},
 		},
 	}
@@ -53,13 +55,13 @@ func TestStoreInterval(t *testing.T) {
 			t.Parallel()
 			fileName := tt.name + "_testStoreInterval.json"
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
 			defer cancel()
 
 			repo, err := tt.repo()
 			require.NoError(t, err)
 
-			service, err := NewService(repo, config.ServerCnf{
+			service, err := NewService(repo, nil, config.ServerCnf{
 				StoreInterval:   1,
 				FileStoragePath: fileName,
 			})
@@ -74,7 +76,9 @@ func TestStoreInterval(t *testing.T) {
 			bytes, err := io.ReadAll(file)
 			require.NoError(t, err)
 
-			expected, err := json.Marshal(repo.List())
+			list, err := repo.List(ctx)
+			require.NoError(t, err)
+			expected, err := json.Marshal(list)
 			require.NoError(t, err)
 			require.JSONEq(t, string(expected), string(bytes))
 

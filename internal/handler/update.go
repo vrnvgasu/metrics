@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type UpdateRequest struct {
@@ -19,18 +20,20 @@ func (h *Handler) Update(c *gin.Context) {
 
 	var req UpdateRequest
 	if err := c.ShouldBindUri(&req); err != nil {
-		http.Error(c.Writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	}
-
-	metric, err := models.NewMetricsFromStrings(req.MType, req.Name, req.Value)
-	if err != nil {
-		http.Error(c.Writer, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		h.responseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
 
-	if err = h.Storage.Add(metric); err != nil {
-		http.Error(c.Writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	metric, err := models.NewMetricsFromStrings(req.MType, req.Name, req.Value)
+	if err != nil {
+		h.responseError(c, serviceerrors.BadRequestError())
+
+		return
+	}
+
+	if err = h.MetricService.CreateOrUpdate(c, []*models.Metrics{&metric}); err != nil {
+		h.responseError(c, err)
 
 		return
 	}

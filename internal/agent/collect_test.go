@@ -102,7 +102,7 @@ loop:
 }
 
 func TestCollect(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
 	defer cancel()
 
 	a := NewAgent(nil, 100)

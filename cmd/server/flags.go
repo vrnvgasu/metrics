@@ -16,7 +16,8 @@ func parseFlags() *config.ServerCnf {
 	pflag.StringVarP(&cnf.LogLevel, "loglevel", "l", "info", "log level")
 	pflag.IntVarP(&cnf.StoreInterval, "storeInterval", "i", 300, "store interval in seconds")
 	pflag.StringVarP(&cnf.FileStoragePath, "fileStoragePath", "f", "store.json", "file storage path")
-	pflag.BoolVarP(&cnf.Restore, "Restore", "r", true, "restore storage data")
+	pflag.BoolVarP(&cnf.Restore, "restore", "r", true, "restore storage data")
+	pflag.StringVarP(&cnf.DatabaseDSN, "database_dsn", "d", "", "database DSN in format: host=localhost port=5432 user=metrics password=metrics dbname=metrics sslmode=disable")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

@@ -1,4 +1,4 @@
-package service
+package store
 
 import (
 	"os"
@@ -8,12 +8,15 @@ import (
 
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
+	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
 func TestStoreRestore(t *testing.T) {
 	t.Parallel()
+
+	ctx := t.Context()
 
 	tests := []struct {
 		name            string
@@ -60,17 +63,20 @@ func TestStoreRestore(t *testing.T) {
 			_, err = file.Write([]byte(tt.fileBody))
 			require.NoError(t, err)
 
-			repo := repository.NewMemStorage()
-			service, err := NewService(repo, config.ServerCnf{
+			repo := mem.NewMemStorage()
+			cnf := config.ServerCnf{
 				Restore:         tt.restore,
 				FileStoragePath: fileName,
-			})
+			}
+			service, err := NewService(repo, metric.NewService(repo), cnf)
 			require.NoError(t, err)
 
-			err = service.Restore()
+			err = service.Restore(ctx)
 			require.NoError(t, err)
 
-			require.Equal(t, tt.expectedMetrics, repo.List())
+			list, err := repo.List(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedMetrics, list)
 
 			defer func() {
 				service.Stop()

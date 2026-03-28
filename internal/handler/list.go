@@ -8,7 +8,12 @@ import (
 )
 
 func (h *Handler) List(c *gin.Context) {
-	list := h.Storage.List()
+	list, err := h.MetricService.AllMetrics(c)
+	if err != nil {
+		h.responseError(c, err)
+
+		return
+	}
 	items := make([]string, 0, len(list))
 	for _, m := range list {
 		items = append(items, fmt.Sprintf("%s: %s", m.ID, m.ValueToString()))

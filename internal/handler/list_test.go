@@ -9,24 +9,29 @@ import (
 	"github.com/stretchr/testify/require"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
-	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
+	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
 func TestList(t *testing.T) {
-	s := repository.NewMemStorage()
-	err := s.Add(models.Metrics{
+	ctx := t.Context()
+
+	repo := mem.NewMemStorage()
+	err := repo.Save(ctx, &models.Metrics{
 		ID:    "1",
 		MType: models.Gauge,
 		Value: helper.NewRefFloat64(11.1),
 	})
 	require.NoError(t, err)
-	err = s.Add(models.Metrics{
+	err = repo.Save(ctx, &models.Metrics{
 		ID:    "2",
 		MType: models.Counter,
 		Delta: helper.NewRefInt64(11),
 	})
 	require.NoError(t, err)
+
+	s := metric.NewService(repo)
 
 	tests := []struct {
 		name                string
@@ -55,7 +60,7 @@ func TestList(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			require.NoError(t, err)
-			h := NewHandler(s)
+			h := NewHandler(s, nil)
 
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			w := httptest.NewRecorder()

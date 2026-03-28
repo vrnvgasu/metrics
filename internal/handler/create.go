@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
 type UpdateJSONRequest struct {
@@ -15,8 +16,8 @@ type UpdateJSONRequest struct {
 	Value *float64 `json:"value,omitempty"`         // значение метрики в случае передачи gauge
 }
 
-func (r *UpdateJSONRequest) ToMetrics() models.Metrics {
-	return models.Metrics{
+func (r *UpdateJSONRequest) ToMetrics() *models.Metrics {
+	return &models.Metrics{
 		ID:    r.ID,
 		MType: r.MType,
 		Delta: r.Delta,
@@ -28,13 +29,35 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	var body UpdateJSONRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		h.responseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
 
-	if err := h.Storage.Add(body.ToMetrics()); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.MetricService.CreateOrUpdate(c, []*models.Metrics{body.ToMetrics()}); err != nil {
+		h.responseError(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, http.NoBody)
+}
+
+func (h *Handler) UpdateJSONList(c *gin.Context) {
+	var body []UpdateJSONRequest
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.responseError(c, serviceerrors.BadRequestError())
+
+		return
+	}
+
+	metrics := make([]*models.Metrics, 0, len(body))
+	for _, v := range body {
+		metrics = append(metrics, v.ToMetrics())
+	}
+	if err := h.MetricService.CreateOrUpdate(c, metrics); err != nil {
+		h.responseError(c, err)
 
 		return
 	}

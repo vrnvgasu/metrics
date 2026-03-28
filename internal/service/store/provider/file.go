@@ -1,4 +1,4 @@
-package handler
+package provider
 
 import (
 	"encoding/json"
@@ -60,8 +60,8 @@ func NewConsumer(filename string) (*Consumer, error) {
 		decoder: json.NewDecoder(file),
 	}, nil
 }
-func (c *Consumer) ReadMetrics() (models.MetricsList, error) {
-	var l models.MetricsList
+func (c *Consumer) ReadMetrics() ([]*models.Metrics, error) {
+	l := make([]*models.Metrics, 0)
 	if err := c.decoder.Decode(&l); err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
