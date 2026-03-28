@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
@@ -94,7 +95,7 @@ func TestUpdateJSON(t *testing.T) {
 
 			repo := mem.NewMemStorage()
 			s := metric.NewService(repo)
-			h := NewHandler(s, nil)
+			h := NewHandler(s, nil, &config.ServerCnf{})
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -142,7 +143,7 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 
 	repo := mem.NewMemStorage()
 	s := metric.NewService(repo)
-	h := NewHandler(s, nil)
+	h := NewHandler(s, nil, &config.ServerCnf{})
 
 	body, err := json.Marshal(updateRequest)
 	require.NoError(t, err)

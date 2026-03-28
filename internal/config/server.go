@@ -7,6 +7,7 @@ type ServerCnf struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
+	Key             string `env:"KEY"`
 }
 
 func (s *ServerCnf) String() string {

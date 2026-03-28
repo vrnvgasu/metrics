@@ -34,6 +34,10 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 
+	if ok := h.validateHeaderHashSHA256(c); !ok {
+		return
+	}
+
 	if err := h.MetricService.CreateOrUpdate(c, []*models.Metrics{body.ToMetrics()}); err != nil {
 		h.responseError(c, err)
 
@@ -49,6 +53,10 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 	if err := c.ShouldBindJSON(&body); err != nil {
 		h.responseError(c, serviceerrors.BadRequestError())
 
+		return
+	}
+
+	if ok := h.validateHeaderHashSHA256(c); !ok {
 		return
 	}
 

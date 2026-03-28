@@ -25,6 +25,10 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	if ok := h.validateHeaderHashSHA256(c); !ok {
+		return
+	}
+
 	metric, err := models.NewMetricsFromStrings(req.MType, req.Name, req.Value)
 	if err != nil {
 		h.responseError(c, serviceerrors.BadRequestError())

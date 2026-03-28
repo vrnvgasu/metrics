@@ -7,9 +7,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
+	"github.com/vrnvgasu/metrics/pkg/hash"
+)
+
+const (
+	hashHeader = "HashSHA256"
 )
 
 type MetricService interface {
@@ -32,12 +38,15 @@ type ResponseError struct {
 type Handler struct {
 	MetricService MetricService
 	HealthService HealthService
+
+	cfg *config.ServerCnf
 }
 
-func NewHandler(m MetricService, h HealthService) *Handler {
+func NewHandler(m MetricService, h HealthService, cfg *config.ServerCnf) *Handler {
 	return &Handler{
 		MetricService: m,
 		HealthService: h,
+		cfg:           cfg,
 	}
 }
 
@@ -76,4 +85,36 @@ func (h *Handler) parseServiceError(c *gin.Context, err *serviceerrors.ServiceEr
 		UserMessage: err.Message,
 		Error:       sourceError,
 	})
+}
+
+func (h *Handler) validateHeaderHashSHA256(c *gin.Context) bool {
+	if h.cfg.Key == "" {
+		return true
+	}
+
+	bodyBytes, err := c.GetRawData()
+	if err != nil {
+		h.responseError(c, err)
+
+		return false
+	}
+
+	if len(bodyBytes) == 0 {
+		return true
+	}
+
+	signature, err := hash.PrepareHeaderHashSHA256(h.cfg.Key, bodyBytes)
+	if err != nil {
+		h.responseError(c, err)
+
+		return false
+	}
+
+	if c.Request.Header.Get(hashHeader) != signature {
+		h.responseError(c, serviceerrors.BadRequestError())
+
+		return false
+	}
+
+	return true
 }
