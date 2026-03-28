@@ -21,7 +21,7 @@ import (
 func TestUpdateJSON(t *testing.T) {
 	t.Parallel()
 
-	const path = "/update"
+	const path = "/update/"
 
 	tests := []struct {
 		name                string
@@ -132,7 +132,7 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 	t.Parallel()
 
 	var (
-		path          = "/update"
+		path          = "/update/"
 		updateRequest = UpdateJSONRequest{
 			ID:    "11",
 			MType: models.Gauge,

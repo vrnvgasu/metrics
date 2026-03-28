@@ -21,7 +21,7 @@ import (
 func TestValue(t *testing.T) {
 	t.Parallel()
 
-	const path = "/value"
+	const path = "/value/"
 
 	ctx := t.Context()
 
