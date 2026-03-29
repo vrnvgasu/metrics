@@ -30,7 +30,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 		valueGroup.GET("/:mtype/:name", handler.Find)
 	}
 
-	r.POST("/updates", handler.UpdateJSONList)
+	r.POST("/updates", middleware.Hash(handler.cfg), handler.UpdateJSONList)
 
 	updateGroup := r.Group("/update")
 	{
