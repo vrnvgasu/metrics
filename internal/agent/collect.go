@@ -2,12 +2,19 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"runtime"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
+	"github.com/vrnvgasu/metrics/pkg/helper"
+
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 const (
@@ -156,23 +163,79 @@ const (
 )
 
 func (a *Agent) Collect(ctx context.Context, cnf *config.AgentCnf) error {
-	var memStats runtime.MemStats
+	errGroup, ctx := errgroup.WithContext(ctx)
+	errGroup.Go(func() error {
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
+			if err := a.addGopsutil(ctx); err != nil {
+				return err
+			}
+
+			time.Sleep(time.Duration(cnf.PollInterval) * time.Second)
 		}
+	})
 
-		runtime.ReadMemStats(&memStats)
+	errGroup.Go(func() error {
+		var memStats runtime.MemStats
 
-		a.addPollCount()
-		a.addStatsMetric(memStats)
-		a.addRandomValue()
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
 
-		time.Sleep(time.Duration(cnf.PollInterval) * time.Second)
+			runtime.ReadMemStats(&memStats)
+
+			a.addPollCount()
+			a.addStatsMetric(memStats)
+			a.addRandomValue()
+
+			time.Sleep(time.Duration(cnf.PollInterval) * time.Second)
+		}
+	})
+
+	if err := errGroup.Wait(); err != nil {
+		return fmt.Errorf("agent collect: %w", err)
 	}
+
+	return nil
+}
+
+func (a *Agent) addGopsutil(ctx context.Context) error {
+	v, err := mem.VirtualMemoryWithContext(ctx)
+	if err != nil {
+		return fmt.Errorf("mem.VirtualMemoryWithContext: %w", err)
+	}
+	a.pushMetric(models.Metrics{
+		ID:    "TotalMemory",
+		MType: models.Gauge,
+		Value: helper.NewRefFloat64(float64(v.Total)),
+	})
+	a.pushMetric(models.Metrics{
+		ID:    "FreeMemory",
+		MType: models.Gauge,
+		Value: helper.NewRefFloat64(float64(v.Free)),
+	})
+
+	percentages, err := cpu.PercentWithContext(ctx, 0, true)
+	if err != nil {
+		return fmt.Errorf("cpu.PercentWithContext: %w", err)
+	}
+	for i, percent := range percentages {
+		a.pushMetric(models.Metrics{
+			ID:    fmt.Sprintf("CPUutilization%d", i+1),
+			MType: models.Gauge,
+			Value: &percent,
+		})
+	}
+
+	return nil
 }
 
 func (a *Agent) addPollCount() {
