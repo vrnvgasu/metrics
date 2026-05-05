@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vrnvgasu/metrics/internal/handler/response"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
@@ -29,13 +30,13 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	var body UpdateJSONRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError())
+		response.ResponseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
 
 	if err := h.MetricService.CreateOrUpdate(c, []*models.Metrics{body.ToMetrics()}); err != nil {
-		h.responseError(c, err)
+		response.ResponseError(c, err)
 
 		return
 	}
@@ -47,7 +48,7 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 	var body []UpdateJSONRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError())
+		response.ResponseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
@@ -57,7 +58,7 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 		metrics = append(metrics, v.ToMetrics())
 	}
 	if err := h.MetricService.CreateOrUpdate(c, metrics); err != nil {
-		h.responseError(c, err)
+		response.ResponseError(c, err)
 
 		return
 	}

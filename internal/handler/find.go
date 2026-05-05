@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vrnvgasu/metrics/internal/handler/response"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
@@ -18,20 +19,20 @@ func (h *Handler) Find(c *gin.Context) {
 
 	var req FindRequest
 	if err := c.ShouldBindUri(&req); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError())
+		response.ResponseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
 
 	m, err := h.MetricService.FindByTypeAndID(c, req.MType, req.Name)
 	if err != nil {
-		h.responseError(c, err)
+		response.ResponseError(c, err)
 
 		return
 	}
 
 	if _, err = c.Writer.Write([]byte(m.ValueToString())); err != nil {
-		h.responseError(c, err)
+		response.ResponseError(c, err)
 
 		return
 	}

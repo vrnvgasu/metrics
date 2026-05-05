@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vrnvgasu/metrics/internal/handler/response"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
@@ -34,14 +35,14 @@ func (h *Handler) Value(c *gin.Context) {
 	var body ValueRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		h.responseError(c, serviceerrors.BadRequestError())
+		response.ResponseError(c, serviceerrors.BadRequestError())
 
 		return
 	}
 
 	metrics, err := h.MetricService.FindByTypeAndID(c, body.MType, body.ID)
 	if err != nil {
-		h.responseError(c, err)
+		response.ResponseError(c, err)
 
 		return
 	}

@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/vrnvgasu/metrics/internal/handler/response"
 )
 
 func (h *Handler) List(c *gin.Context) {
 	list, err := h.MetricService.AllMetrics(c)
 	if err != nil {
-		h.responseError(c, err)
+		response.ResponseError(c, err)
 
 		return
 	}

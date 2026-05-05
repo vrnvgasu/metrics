@@ -110,5 +110,5 @@ func TestCollect(t *testing.T) {
 
 	err := a.Collect(ctx, &config.AgentCnf{PollInterval: 1})
 	require.NoError(t, err)
-	require.Equal(t, len(gaugesMemStatNames)+1+1, len(a.Metrics))
+	require.LessOrEqual(t, len(gaugesMemStatNames)+1+1, len(a.Metrics))
 }

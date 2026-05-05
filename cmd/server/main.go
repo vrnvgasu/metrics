@@ -44,7 +44,7 @@ func run() error {
 	metricService := metric.NewService(storage)
 	healthService := healthcheck.NewService(storage)
 
-	h := handler.NewHandler(metricService, healthService)
+	h := handler.NewHandler(metricService, healthService, cnf)
 	router := handler.NewServer(handler.NewRouter(h), cnf)
 
 	storeService, err := store.NewService(storage, metricService, *cnf)

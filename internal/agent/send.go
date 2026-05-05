@@ -9,74 +9,130 @@ import (
 	"net/http"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/pkg/compress"
+	"github.com/vrnvgasu/metrics/pkg/hash"
 )
 
 const (
 	path       = "updates"
 	batchCount = 100
+	hashHeader = "HashSHA256"
 )
 
 func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
-	batch := make([]*models.Metrics, 0, batchCount)
+	chMetrics := make(chan *models.Metrics, batchCount)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-		}
+	go func() {
+		defer close(chMetrics)
 
 		for {
 			m := a.pollMetric()
 			if m == nil {
-				break
-			}
-
-			batch = append(batch, m)
-			if len(batch) < batchCount {
 				continue
 			}
-
-			if err := a.SendMetric(batch, cnf.Address); err != nil {
-				return fmt.Errorf("agent.SendMetrics SendMetric: %w", err)
+			select {
+			case <-ctx.Done():
+				return
+			case chMetrics <- m:
 			}
 		}
-		time.Sleep(time.Duration(cnf.ReportInterval) * time.Second)
+	}()
+
+	workersCount := cnf.RateLimit
+	if workersCount < 1 {
+		workersCount = 1
 	}
+
+	errGroup, ctx := errgroup.WithContext(ctx)
+	for i := 0; i < workersCount; i++ {
+		errGroup.Go(func() error {
+			batch := make([]*models.Metrics, 0, batchCount)
+			for m := range chMetrics {
+				batch = append(batch, m)
+				if len(batch) < batchCount {
+					continue
+				}
+
+				if err := a.sendBatch(batch, cnf); err != nil {
+					return fmt.Errorf("agent.SendMetrics SendBatch: %w", err)
+				}
+
+				batch = make([]*models.Metrics, 0, batchCount)
+
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(time.Duration(cnf.ReportInterval) * time.Second):
+				}
+			}
+
+			if len(batch) > 0 {
+				return a.sendBatch(batch, cnf)
+			}
+
+			return nil
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return fmt.Errorf("agent.SendMetrics Wait: %w", err)
+	}
+
+	return nil
 }
 
-func (a *Agent) SendMetric(m []*models.Metrics, address string) error {
+func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
 	body, err := json.Marshal(m)
 	if err != nil {
-		return fmt.Errorf("agent.SendMetric Marshal: %w", err)
+		return fmt.Errorf("agent.SendBatch Marshal: %w", err)
 	}
 
 	cBody, err := compress.GzipCompress(body)
 	if err != nil {
-		return fmt.Errorf("agent.SendMetric GzipCompress: %w", err)
+		return fmt.Errorf("agent.SendBatch GzipCompress: %w", err)
 	}
 
-	updateURL := fmt.Sprintf("http://%s/%s", address, path)
+	updateURL := fmt.Sprintf("http://%s/%s", cnf.Address, path)
 	req, err := http.NewRequest(http.MethodPost, updateURL, bytes.NewBuffer(cBody))
 	if err != nil {
-		return fmt.Errorf("agent.SendMetric NewRequest: %w", err)
+		return fmt.Errorf("agent.SendBatch NewRequest: %w", err)
+	}
+
+	if err = a.SetHeaderHashSHA256(cnf.Key, body, req); err != nil {
+		return fmt.Errorf("agent.SendBatch SetHeaderHashSHA256: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 	resp, err := a.Client.Do(req)
 	if err != nil {
-		return fmt.Errorf("agent.SendMetric Do: %w", err)
+		return fmt.Errorf("agent.SendBatch Do: %w", err)
 	}
 
 	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
-		return fmt.Errorf("agent.SendMetric Copy: %w", err)
+		return fmt.Errorf("agent.SendBatch Copy: %w", err)
 	}
 	defer resp.Body.Close()
 
 	return nil
+}
+
+func (a *Agent) SetHeaderHashSHA256(secret string, body []byte, r *http.Request) (err error) {
+	if secret == "" {
+		return nil
+	}
+
+	h, err := hash.PrepareHeaderHashSHA256(secret, body)
+	if err != nil {
+		return fmt.Errorf("agent.SetHeaderHashSHA256 PrepareHeaderHashSHA256: %w", err)
+	}
+
+	r.Header.Set(hashHeader, h)
+
+	return
 }

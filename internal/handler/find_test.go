@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
@@ -97,7 +98,7 @@ func TestFind(t *testing.T) {
 			t.Parallel()
 
 			require.NoError(t, err)
-			h := NewHandler(s, nil)
+			h := NewHandler(s, nil, &config.ServerCnf{})
 
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			request.Header.Add("Content-Type", tt.contentType)
