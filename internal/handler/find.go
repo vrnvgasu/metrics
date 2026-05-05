@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/response"
+	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
@@ -24,14 +25,14 @@ func (h *Handler) Find(c *gin.Context) {
 		return
 	}
 
-	m, err := h.MetricService.FindByTypeAndID(c, req.MType, req.Name)
+	metrics, err := h.MetricService.FindByTypeAndID(c, models.MetricType(req.MType), req.Name)
 	if err != nil {
 		response.ResponseError(c, err)
 
 		return
 	}
 
-	if _, err = c.Writer.Write([]byte(m.ValueToString())); err != nil {
+	if _, err = c.Writer.Write([]byte(metrics.ValueToString())); err != nil {
 		response.ResponseError(c, err)
 
 		return

@@ -11,10 +11,10 @@ import (
 )
 
 type UpdateJSONRequest struct {
-	ID    string   `json:"id" binding:"required"`   // имя метрики
-	MType string   `json:"type" binding:"required"` // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"`         // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"`         // значение метрики в случае передачи gauge
+	ID    string            `json:"id" binding:"required"`   // имя метрики
+	MType models.MetricType `json:"type" binding:"required"` // параметр, принимающий значение gauge или counter
+	Delta *int64            `json:"delta,omitempty"`         // значение метрики в случае передачи counter
+	Value *float64          `json:"value,omitempty"`         // значение метрики в случае передачи gauge
 }
 
 func (r *UpdateJSONRequest) ToMetrics() *models.Metrics {

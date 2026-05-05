@@ -28,7 +28,7 @@ func TestGetByTypeAndID(t *testing.T) {
 	tests := []struct {
 		name      string
 		mMap      models.MetricsMap
-		mtype     string
+		mtype     models.MetricType
 		id        string
 		expectedM models.Metrics
 		err       require.ErrorAssertionFunc

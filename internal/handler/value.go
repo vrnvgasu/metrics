@@ -11,15 +11,15 @@ import (
 )
 
 type ValueRequest struct {
-	ID    string `json:"id" binding:"required"`
-	MType string `json:"type" binding:"required"`
+	ID    string            `json:"id" binding:"required"`
+	MType models.MetricType `json:"type" binding:"required"`
 }
 
 type ValueResponse struct {
-	ID    string   `json:"id"`
-	MType string   `json:"type"`
-	Delta *int64   `json:"delta,omitempty"`
-	Value *float64 `json:"value,omitempty"`
+	ID    string            `json:"id"`
+	MType models.MetricType `json:"type"`
+	Delta *int64            `json:"delta,omitempty"`
+	Value *float64          `json:"value,omitempty"`
 }
 
 func NewValueResponseFromMetric(m models.Metrics) ValueResponse {

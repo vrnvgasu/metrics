@@ -70,13 +70,13 @@ func start(
 	}
 
 	go func() {
-		log.Println("starting router on: ", cnf.Address)
+		logger.Log.Infof("starting router on: %s", cnf.Address)
 		if err := router.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
 	}()
 	go func() {
-		log.Printf("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
+		logger.Log.Infof("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
 		if err := server.StoreInterval(ctx); err != nil {
 			serverErr <- err
 		}
@@ -88,7 +88,7 @@ func start(
 func wait(ctx context.Context, serverErr chan error, router *handler.Server, server *store.Service) error {
 	select {
 	case <-ctx.Done():
-		log.Println("shutting down router")
+		logger.Log.Info("shutting down router")
 	case err := <-serverErr:
 		return fmt.Errorf("router error: %w", err)
 	}

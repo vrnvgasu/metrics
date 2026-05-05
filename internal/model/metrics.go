@@ -5,9 +5,11 @@ import (
 	"strconv"
 )
 
+type MetricType string
+
 const (
-	Counter = "counter"
-	Gauge   = "gauge"
+	Counter MetricType = "counter"
+	Gauge   MetricType = "gauge"
 )
 
 // NOTE: Не усложняем пример, вводя иерархическую вложенность структур.
@@ -16,11 +18,11 @@ const (
 // что бы отличать значение "0", от не заданного значения
 // и соответственно не кодировать в структуру.
 type Metrics struct {
-	ID    string   `json:"id"`
-	MType string   `json:"type"`
-	Delta *int64   `json:"delta,omitempty"`
-	Value *float64 `json:"value,omitempty"`
-	Hash  string   `json:"hash,omitempty"`
+	ID    string     `json:"id"`
+	MType MetricType `json:"type"`
+	Delta *int64     `json:"delta,omitempty"`
+	Value *float64   `json:"value,omitempty"`
+	Hash  string     `json:"hash,omitempty"`
 }
 
 type MetricsMap map[string]Metrics
@@ -42,7 +44,7 @@ func NewMetricsFromStrings(mType, ID, value string) (Metrics, error) {
 }
 
 func (m *Metrics) setTypeFromString(v string) error {
-	switch v {
+	switch MetricType(v) {
 	case Counter:
 		m.MType = Counter
 		return nil

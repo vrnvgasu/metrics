@@ -22,7 +22,7 @@ func TestNewMetricsFromStrings(t *testing.T) {
 	}{
 		{
 			name:  "success: gauge",
-			mType: Gauge,
+			mType: string(Gauge),
 			id:    "1",
 			value: "0.1",
 			expected: Metrics{
@@ -34,7 +34,7 @@ func TestNewMetricsFromStrings(t *testing.T) {
 		},
 		{
 			name:        "failed: gauge wrong value",
-			mType:       Gauge,
+			mType:       string(Gauge),
 			id:          "1",
 			value:       "dummy",
 			expected:    Metrics{},
@@ -43,7 +43,7 @@ func TestNewMetricsFromStrings(t *testing.T) {
 
 		{
 			name:  "success: counter",
-			mType: Counter,
+			mType: string(Counter),
 			id:    "1",
 			value: "1",
 			expected: Metrics{
@@ -55,7 +55,7 @@ func TestNewMetricsFromStrings(t *testing.T) {
 		},
 		{
 			name:        "failed: counter incorrect value",
-			mType:       Counter,
+			mType:       string(Counter),
 			id:          "1",
 			value:       "0.1",
 			expected:    Metrics{},
@@ -63,7 +63,7 @@ func TestNewMetricsFromStrings(t *testing.T) {
 		},
 		{
 			name:        "failed: counter wrong value",
-			mType:       Counter,
+			mType:       string(Counter),
 			id:          "1",
 			value:       "dummy",
 			expected:    Metrics{},

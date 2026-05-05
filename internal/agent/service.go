@@ -31,12 +31,3 @@ func NewAgent(client Client, bufSize int) *Agent {
 func (a *Agent) pushMetric(m models.Metrics) {
 	a.Metrics <- m
 }
-
-func (a *Agent) pollMetric() *models.Metrics {
-	select {
-	case m := <-a.Metrics:
-		return &m
-	default:
-		return nil
-	}
-}

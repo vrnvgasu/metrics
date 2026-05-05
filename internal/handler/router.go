@@ -18,6 +18,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 	r.Use(middleware.Logger())
 	r.Use(middleware.Gzip())
+	r.Use(gin.Recovery())
 
 	sub, _ := fs.Sub(tmplFS, "templates")
 	r.LoadHTMLFS(http.FS(sub), "*")

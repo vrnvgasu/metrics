@@ -56,7 +56,7 @@ func (mr *MockStorageMockRecorder) DoInTransaction(ctx, fn any) *gomock.Call {
 }
 
 // GetByTypeAndID mocks base method.
-func (m *MockStorage) GetByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error) {
+func (m *MockStorage) GetByTypeAndID(ctx context.Context, mtype models.MetricType, id string) (*models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByTypeAndID", ctx, mtype, id)
 	ret0, _ := ret[0].(*models.Metrics)

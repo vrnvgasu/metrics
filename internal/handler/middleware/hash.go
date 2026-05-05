@@ -34,8 +34,6 @@ func Hash(cnf *config.ServerCnf) gin.HandlerFunc {
 			return
 		}
 
-		hh := c.Request.Header.Get(hashHeader)
-		_ = hh
 		if c.Request.Header.Get(hashHeader) != signature {
 			response.ResponseError(c, serviceerrors.BadRequestError())
 

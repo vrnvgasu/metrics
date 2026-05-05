@@ -30,14 +30,18 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 		defer close(chMetrics)
 
 		for {
-			m := a.pollMetric()
-			if m == nil {
-				continue
-			}
 			select {
 			case <-ctx.Done():
 				return
-			case chMetrics <- m:
+			case m, ok := <-a.Metrics:
+				if !ok {
+					return
+				}
+				select {
+				case <-ctx.Done():
+					return
+				case chMetrics <- &m:
+				}
 			}
 		}
 	}()
@@ -114,10 +118,10 @@ func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
 	}
 
 	_, err = io.Copy(io.Discard, resp.Body)
+	defer resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("agent.SendBatch Copy: %w", err)
 	}
-	defer resp.Body.Close()
 
 	return nil
 }

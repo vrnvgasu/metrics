@@ -15,7 +15,7 @@ func DefaultConfig() *RetryConfig {
 	return &RetryConfig{
 		MaxRetries:         3,
 		StartRetryInterval: 1 * time.Second,
-		AddRetryPeriod:     5 * time.Second,
+		AddRetryPeriod:     2 * time.Second,
 	}
 }
 

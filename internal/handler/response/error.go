@@ -19,7 +19,7 @@ type Error struct {
 
 func ResponseError(c *gin.Context, err error) {
 	if err != nil {
-		_ = c.Error(err)
+		c.Error(err)
 	}
 
 	var serviceError *serviceerrors.ServiceError

@@ -17,8 +17,8 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 	items := make([]string, 0, len(list))
-	for _, m := range list {
-		items = append(items, fmt.Sprintf("%s: %s", m.ID, m.ValueToString()))
+	for _, metrics := range list {
+		items = append(items, fmt.Sprintf("%s: %s", metrics.ID, metrics.ValueToString()))
 	}
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
