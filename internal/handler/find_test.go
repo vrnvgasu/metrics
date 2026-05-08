@@ -12,6 +12,7 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository/mem"
+	"github.com/vrnvgasu/metrics/internal/service/audit"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
@@ -35,6 +36,9 @@ func TestFind(t *testing.T) {
 	require.NoError(t, err)
 
 	s := metric.NewService(repo)
+
+	publisher, err := audit.NewAudit(&config.ServerCnf{})
+	require.NoError(t, err)
 
 	tests := []struct {
 		name                string
@@ -97,8 +101,7 @@ func TestFind(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.NoError(t, err)
-			h := NewHandler(s, nil, &config.ServerCnf{})
+			h := NewHandler(s, nil, publisher, &config.ServerCnf{})
 
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			request.Header.Add("Content-Type", tt.contentType)

@@ -8,7 +8,7 @@ import (
 )
 
 type MetricService interface {
-	CreateOrUpdate(context.Context, []*models.Metrics) error
+	CreateOrUpdate(context.Context, models.MetricsList) error
 	FindByTypeAndID(ctx context.Context, mtype models.MetricType, id string) (*models.Metrics, error)
 	AllMetrics(context.Context) (models.MetricsList, error)
 }
@@ -17,17 +17,24 @@ type HealthService interface {
 	CheckPing(ctx context.Context) error
 }
 
+type Publisher interface {
+	Notify(ctx context.Context, metricIDList []string, ip string) error
+}
+
 type Handler struct {
 	MetricService MetricService
 	HealthService HealthService
 
+	publisher Publisher
+
 	cfg *config.ServerCnf
 }
 
-func NewHandler(m MetricService, h HealthService, cfg *config.ServerCnf) *Handler {
+func NewHandler(m MetricService, h HealthService, p Publisher, cfg *config.ServerCnf) *Handler {
 	return &Handler{
 		MetricService: m,
 		HealthService: h,
+		publisher:     p,
 		cfg:           cfg,
 	}
 }

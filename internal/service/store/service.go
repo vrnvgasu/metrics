@@ -11,7 +11,7 @@ import (
 )
 
 type MetricService interface {
-	CreateOrUpdate(context.Context, []*models.Metrics) error
+	CreateOrUpdate(context.Context, models.MetricsList) error
 }
 
 type Service struct {

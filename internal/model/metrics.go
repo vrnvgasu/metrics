@@ -28,6 +28,15 @@ type Metrics struct {
 type MetricsMap map[string]Metrics
 type MetricsList []Metrics
 
+func (l MetricsList) IDList() []string {
+	result := make([]string, 0, len(l))
+	for _, m := range l {
+		result = append(result, m.ID)
+	}
+
+	return result
+}
+
 func NewMetricsFromStrings(mType, ID, value string) (Metrics, error) {
 	m := &Metrics{
 		ID:   ID,

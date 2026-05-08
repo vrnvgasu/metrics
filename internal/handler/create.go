@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/response"
+	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
@@ -17,8 +18,8 @@ type UpdateJSONRequest struct {
 	Value *float64          `json:"value,omitempty"`         // значение метрики в случае передачи gauge
 }
 
-func (r *UpdateJSONRequest) ToMetrics() *models.Metrics {
-	return &models.Metrics{
+func (r *UpdateJSONRequest) ToMetrics() models.Metrics {
+	return models.Metrics{
 		ID:    r.ID,
 		MType: r.MType,
 		Delta: r.Delta,
@@ -35,10 +36,14 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 
-	if err := h.MetricService.CreateOrUpdate(c, []*models.Metrics{body.ToMetrics()}); err != nil {
+	if err := h.MetricService.CreateOrUpdate(c, []models.Metrics{body.ToMetrics()}); err != nil {
 		response.ResponseError(c, err)
 
 		return
+	}
+
+	if err := h.publisher.Notify(c, []string{body.ID}, c.ClientIP()); err != nil {
+		logger.Log.Errorf("failed to notify audit: %s", err.Error())
 	}
 
 	c.JSON(http.StatusOK, http.NoBody)
@@ -53,14 +58,18 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 		return
 	}
 
-	metrics := make([]*models.Metrics, 0, len(body))
+	metricList := make(models.MetricsList, 0, len(body))
 	for _, v := range body {
-		metrics = append(metrics, v.ToMetrics())
+		metricList = append(metricList, v.ToMetrics())
 	}
-	if err := h.MetricService.CreateOrUpdate(c, metrics); err != nil {
+	if err := h.MetricService.CreateOrUpdate(c, metricList); err != nil {
 		response.ResponseError(c, err)
 
 		return
+	}
+
+	if err := h.publisher.Notify(c, metricList.IDList(), c.ClientIP()); err != nil {
+		logger.Log.Errorf("failed to notify audit: %s", err.Error())
 	}
 
 	c.JSON(http.StatusOK, http.NoBody)

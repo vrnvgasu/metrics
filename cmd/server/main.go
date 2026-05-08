@@ -14,6 +14,7 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
+	"github.com/vrnvgasu/metrics/internal/service/audit"
 	"github.com/vrnvgasu/metrics/internal/service/healthcheck"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/internal/service/store"
@@ -44,7 +45,13 @@ func run() error {
 	metricService := metric.NewService(storage)
 	healthService := healthcheck.NewService(storage)
 
-	h := handler.NewHandler(metricService, healthService, cnf)
+	publisher, err := audit.NewAudit(cnf)
+	if err != nil {
+		return fmt.Errorf("could not initialize audit: %w", err)
+	}
+	defer publisher.Close()
+
+	h := handler.NewHandler(metricService, healthService, publisher, cnf)
 	router := handler.NewServer(handler.NewRouter(h), cnf)
 
 	storeService, err := store.NewService(storage, metricService, *cnf)

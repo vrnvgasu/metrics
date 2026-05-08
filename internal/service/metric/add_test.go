@@ -67,7 +67,7 @@ func Test_createOrUpdate(t *testing.T) {
 				storage: tt.storage(),
 			}
 
-			err := s.createOrUpdate(t.Context(), []*models.Metrics{&tt.m})
+			err := s.createOrUpdate(t.Context(), []models.Metrics{tt.m})
 			tt.expectedErr(t, err)
 		})
 	}
