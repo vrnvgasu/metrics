@@ -112,3 +112,28 @@ func TestCollect(t *testing.T) {
 	require.NoError(t, err)
 	require.LessOrEqual(t, len(gaugesMemStatNames)+1+1, len(a.Metrics))
 }
+
+func BenchmarkAddStatsMetric(b *testing.B) {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	a := NewAgent(nil, len(gaugesMemStatNames)+10)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		a.addStatsMetric(memStats)
+		// чтобы не блокировать следующую итерацию
+		for len(a.Metrics) > 0 {
+			<-a.Metrics
+		}
+	}
+}
+
+func BenchmarkAddRandomValue(b *testing.B) {
+	a := NewAgent(nil, 10)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		a.addRandomValue()
+		<-a.Metrics
+	}
+}

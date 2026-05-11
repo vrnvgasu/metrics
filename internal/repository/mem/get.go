@@ -8,6 +8,8 @@ import (
 )
 
 func (s *Storage) GetByTypeAndID(_ context.Context, mtype models.MetricType, id string) (*models.Metrics, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	m, ok := s.metrics[id]
 	if !ok || m.MType != mtype {
 		return nil, repository.ErrNotFound

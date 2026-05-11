@@ -1,6 +1,7 @@
 package metric
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,7 +9,9 @@ import (
 
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository"
+	"github.com/vrnvgasu/metrics/internal/repository/mem"
 	mockrepository "github.com/vrnvgasu/metrics/internal/repository/mocks"
+	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
 func Test_createOrUpdate(t *testing.T) {
@@ -70,5 +73,39 @@ func Test_createOrUpdate(t *testing.T) {
 			err := s.createOrUpdate(t.Context(), []models.Metrics{tt.m})
 			tt.expectedErr(t, err)
 		})
+	}
+}
+
+// benchPayload — реалистичный батч из 30 метрик (27 gauge + PollCount counter + 2 gopsutil)
+var benchBatch = func() models.MetricsList {
+	list := make(models.MetricsList, 0, 30)
+	names := []string{
+		"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys",
+		"HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased",
+		"HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys",
+		"MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC",
+		"NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys",
+		"Sys", "TotalAlloc", "TotalMemory", "FreeMemory",
+	}
+	for _, name := range names {
+		v := 1234567.0
+		list = append(list, models.Metrics{ID: name, MType: models.Gauge, Value: &v})
+	}
+	delta := int64(42)
+	list = append(list, models.Metrics{ID: "PollCount", MType: models.Counter, Delta: &delta})
+	return list
+}()
+
+func BenchmarkCreateOrUpdate(b *testing.B) {
+	s := NewService(mem.NewMemStorage())
+	ctx := context.Background()
+	// прогреть: добавить счётчик, чтобы покрыть путь addCounter с существующей записью
+	_ = s.CreateOrUpdate(ctx, models.MetricsList{
+		{ID: "PollCount", MType: models.Counter, Delta: helper.NewRefInt64(1)},
+	})
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		_ = s.CreateOrUpdate(ctx, benchBatch)
 	}
 }

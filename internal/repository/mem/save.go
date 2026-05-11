@@ -7,6 +7,8 @@ import (
 )
 
 func (s *Storage) Save(_ context.Context, m *models.Metrics) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.metrics[m.ID] = *m
 
 	return nil

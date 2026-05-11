@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -76,6 +77,12 @@ func start(
 		return nil, fmt.Errorf("could not restore server: %w", err)
 	}
 
+	go func() {
+		logger.Log.Info("starting pprof server on: localhost:6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			logger.Log.Warnf("pprof server: %v", err)
+		}
+	}()
 	go func() {
 		logger.Log.Infof("starting router on: %s", cnf.Address)
 		if err := router.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {

@@ -82,3 +82,55 @@ func TestNewMetricsFromStrings(t *testing.T) {
 		})
 	}
 }
+
+func TestMetricsList_IDList(t *testing.T) {
+	t.Parallel()
+
+	list := MetricsList{
+		{ID: "Alloc", MType: Gauge},
+		{ID: "PollCount", MType: Counter},
+	}
+	require.Equal(t, []string{"Alloc", "PollCount"}, list.IDList())
+}
+
+func TestMetrics_ValueToString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		m        Metrics
+		expected string
+	}{
+		{
+			name:     "gauge",
+			m:        Metrics{MType: Gauge, Value: helper.NewRefFloat64(1.5)},
+			expected: "1.5",
+		},
+		{
+			name:     "counter",
+			m:        Metrics{MType: Counter, Delta: helper.NewRefInt64(42)},
+			expected: "42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tt.expected, tt.m.ValueToString())
+		})
+	}
+}
+
+func BenchmarkNewMetricsFromStrings_Gauge(b *testing.B) {
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = NewMetricsFromStrings("gauge", "Alloc", "1234567.89")
+	}
+}
+
+func BenchmarkNewMetricsFromStrings_Counter(b *testing.B) {
+	b.ReportAllocs()
+	for b.Loop() {
+		_, _ = NewMetricsFromStrings("counter", "PollCount", "42")
+	}
+}
