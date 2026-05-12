@@ -12,8 +12,9 @@ package mock_audit
 import (
 	reflect "reflect"
 
-	audit "github.com/vrnvgasu/metrics/internal/service/audit"
 	gomock "go.uber.org/mock/gomock"
+
+	audit "github.com/vrnvgasu/metrics/internal/service/audit"
 )
 
 // MockObserver is a mock of Observer interface.
