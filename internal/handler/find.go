@@ -10,11 +10,13 @@ import (
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
+// FindRequest — параметры URL для GET /value/:mtype/:name.
 type FindRequest struct {
 	MType string `uri:"mtype" binding:"required"`
 	Name  string `uri:"name" binding:"required"`
 }
 
+// Find обрабатывает GET /value/:mtype/:name — возвращает значение метрики текстом.
 func (h *Handler) Find(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "text/plain")
 

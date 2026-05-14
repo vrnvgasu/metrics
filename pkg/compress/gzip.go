@@ -1,3 +1,4 @@
+// Package compress предоставляет утилиты для сжатия данных.
 package compress
 
 import (
@@ -20,6 +21,7 @@ var gzipWriterPool = sync.Pool{
 	},
 }
 
+// GzipCompress сжимает данные алгоритмом gzip. Использует sync.Pool для переиспользования буферов.
 func GzipCompress(data []byte) ([]byte, error) {
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()

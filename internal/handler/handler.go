@@ -1,3 +1,4 @@
+// Package handler содержит HTTP-хендлеры сервера метрик.
 package handler
 
 import (
@@ -7,20 +8,29 @@ import (
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
+// MetricService — интерфейс сервиса метрик.
 type MetricService interface {
+	// CreateOrUpdate создает или обновляет список метрик.
 	CreateOrUpdate(context.Context, models.MetricsList) error
+	// FindByTypeAndID возвращает метрику по типу и имени.
 	FindByTypeAndID(ctx context.Context, mtype models.MetricType, id string) (*models.Metrics, error)
+	// AllMetrics возвращает все метрики.
 	AllMetrics(context.Context) (models.MetricsList, error)
 }
 
+// HealthService — интерфейс проверки доступности хранилища.
 type HealthService interface {
+	// CheckPing проверяет соединение с хранилищем.
 	CheckPing(ctx context.Context) error
 }
 
+// Publisher — интерфейс публикации событий аудита.
 type Publisher interface {
+	// Notify отправляет уведомление об обновлении метрик.
 	Notify(ctx context.Context, metricIDList []string, ip string) error
 }
 
+// Handler содержит зависимости HTTP-хендлеров.
 type Handler struct {
 	MetricService MetricService
 	HealthService HealthService
@@ -30,6 +40,7 @@ type Handler struct {
 	cfg *config.ServerCnf
 }
 
+// NewHandler создает Handler с переданными зависимостями.
 func NewHandler(m MetricService, h HealthService, p Publisher, cfg *config.ServerCnf) *Handler {
 	return &Handler{
 		MetricService: m,

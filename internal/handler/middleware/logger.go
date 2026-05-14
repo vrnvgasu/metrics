@@ -31,6 +31,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode
 }
 
+// Logger — middleware для логирования HTTP-запросов (uri, method, duration, status, size).
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()

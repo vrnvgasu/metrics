@@ -9,6 +9,7 @@ import (
 	"github.com/vrnvgasu/metrics/internal/handler/response"
 )
 
+// List обрабатывает GET / — возвращает HTML-страницу со списком всех метрик.
 func (h *Handler) List(c *gin.Context) {
 	list, err := h.MetricService.AllMetrics(c)
 	if err != nil {

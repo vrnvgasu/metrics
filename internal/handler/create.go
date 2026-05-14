@@ -11,13 +11,15 @@ import (
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
+// UpdateJSONRequest — тело запроса для POST /update/ и POST /updates.
 type UpdateJSONRequest struct {
 	ID    string            `json:"id" binding:"required"`   // имя метрики
-	MType models.MetricType `json:"type" binding:"required"` // параметр, принимающий значение gauge или counter
-	Delta *int64            `json:"delta,omitempty"`         // значение метрики в случае передачи counter
-	Value *float64          `json:"value,omitempty"`         // значение метрики в случае передачи gauge
+	MType models.MetricType `json:"type" binding:"required"` // тип: gauge или counter
+	Delta *int64            `json:"delta,omitempty"`         // значение counter
+	Value *float64          `json:"value,omitempty"`         // значение gauge
 }
 
+// ToMetrics конвертирует запрос в модель Metrics.
 func (r *UpdateJSONRequest) ToMetrics() models.Metrics {
 	return models.Metrics{
 		ID:    r.ID,
@@ -27,6 +29,7 @@ func (r *UpdateJSONRequest) ToMetrics() models.Metrics {
 	}
 }
 
+// UpdateJSON обрабатывает POST /update/ — обновляет одну метрику из JSON-тела.
 func (h *Handler) UpdateJSON(c *gin.Context) {
 	var body UpdateJSONRequest
 
@@ -49,6 +52,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	c.JSON(http.StatusOK, http.NoBody)
 }
 
+// UpdateJSONList обрабатывает POST /updates — пакетное обновление метрик из JSON-массива.
 func (h *Handler) UpdateJSONList(c *gin.Context) {
 	var body []UpdateJSONRequest
 

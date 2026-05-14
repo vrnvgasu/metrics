@@ -8,6 +8,7 @@ import (
 	"github.com/vrnvgasu/metrics/internal/handler/response"
 )
 
+// Ping обрабатывает GET /ping — проверяет доступность хранилища.
 func (h *Handler) Ping(c *gin.Context) {
 	if err := h.HealthService.CheckPing(c); err != nil {
 		response.ResponseError(c, err)

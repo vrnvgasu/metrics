@@ -66,6 +66,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// Gzip — middleware для сжатия запросов и ответов (gzip).
 func Gzip() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if strings.Contains(c.Request.Header.Get("Accept-Encoding"), gzipHeader) {

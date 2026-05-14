@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// AgentCnf — конфигурация агента сбора метрик.
 type AgentCnf struct {
 	Address        string `env:"ADDRESS"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`

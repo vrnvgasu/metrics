@@ -1,5 +1,6 @@
 package config
 
+// ServerCnf — конфигурация сервера метрик.
 type ServerCnf struct {
 	Address         string `env:"ADDRESS"`
 	LogLevel        string `env:"LOG_LEVEL"`

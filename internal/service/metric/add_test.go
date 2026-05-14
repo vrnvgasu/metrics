@@ -99,7 +99,7 @@ var benchBatch = func() models.MetricsList {
 func BenchmarkCreateOrUpdate(b *testing.B) {
 	s := NewService(mem.NewMemStorage())
 	ctx := context.Background()
-	// прогреть: добавить счётчик, чтобы покрыть путь addCounter с существующей записью
+	// прогреть: добавить счетчик, чтобы покрыть путь addCounter с существующей записью
 	_ = s.CreateOrUpdate(ctx, models.MetricsList{
 		{ID: "PollCount", MType: models.Counter, Delta: helper.NewRefInt64(1)},
 	})

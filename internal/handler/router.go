@@ -13,6 +13,7 @@ import (
 //go:embed `templates`
 var tmplFS embed.FS
 
+// NewRouter создает gin.Engine с маршрутами и middleware (logger, gzip, recovery).
 func NewRouter(handler *Handler) *gin.Engine {
 	r := gin.New()
 

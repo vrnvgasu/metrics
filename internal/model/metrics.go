@@ -1,3 +1,4 @@
+// Package models содержит типы данных для работы с метриками.
 package models
 
 import (
@@ -5,18 +6,16 @@ import (
 	"strconv"
 )
 
+// MetricType — тип метрики (gauge или counter).
 type MetricType string
 
 const (
-	Counter MetricType = "counter"
-	Gauge   MetricType = "gauge"
+	Counter MetricType = "counter" // счетчик: значение суммируется с предыдущим
+	Gauge   MetricType = "gauge"   // датчик: значение перезаписывается
 )
 
-// NOTE: Не усложняем пример, вводя иерархическую вложенность структур.
-// Органичиваясь плоской моделью.
-// Delta и Value объявлены через указатели,
-// что бы отличать значение "0", от не заданного значения
-// и соответственно не кодировать в структуру.
+// Metrics — модель метрики.
+// Delta и Value объявлены через указатели, чтобы отличать значение "0" от отсутствия значения.
 type Metrics struct {
 	ID    string     `json:"id"`
 	MType MetricType `json:"type"`
@@ -25,9 +24,13 @@ type Metrics struct {
 	Hash  string     `json:"hash,omitempty"`
 }
 
+// MetricsMap — хранилище метрик: имя метрики - метрика.
 type MetricsMap map[string]Metrics
+
+// MetricsList — список метрик.
 type MetricsList []Metrics
 
+// IDList возвращает список идентификаторов метрик.
 func (l MetricsList) IDList() []string {
 	result := make([]string, 0, len(l))
 	for _, m := range l {
@@ -37,6 +40,7 @@ func (l MetricsList) IDList() []string {
 	return result
 }
 
+// NewMetricsFromStrings создает метрику из строковых параметров (URL-путь).
 func NewMetricsFromStrings(mType, ID, value string) (Metrics, error) {
 	m := &Metrics{
 		ID:   ID,
@@ -88,6 +92,7 @@ func (m *Metrics) setValueFromString(v string) error {
 	}
 }
 
+// ValueToString возвращает строковое представление значения метрики.
 func (m *Metrics) ValueToString() string {
 	switch m.MType {
 	case Counter:
