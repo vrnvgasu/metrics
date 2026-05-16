@@ -27,7 +27,7 @@ type HealthService interface {
 // Publisher — интерфейс публикации событий аудита.
 type Publisher interface {
 	// Notify отправляет уведомление об обновлении метрик.
-	Notify(ctx context.Context, metricIDList []string, ip string) error
+	Notify(ctx context.Context, metricIDList []string, ip string)
 }
 
 // Handler содержит зависимости HTTP-хендлеров.

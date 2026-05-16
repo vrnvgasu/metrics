@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/response"
-	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
@@ -42,9 +41,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if err = h.publisher.Notify(c, []string{metric.ID}, c.ClientIP()); err != nil {
-		logger.Log.Errorf("failed to notify audit: %s", err.Error())
-	}
+	h.publisher.Notify(c, []string{metric.ID}, c.ClientIP())
 
 	c.Writer.WriteHeader(http.StatusOK)
 }

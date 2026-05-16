@@ -3,6 +3,7 @@ package audit_test
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -19,16 +20,17 @@ func TestPublisher(t *testing.T) {
 	mockObserver1 := mockaudit.NewMockObserver(ctrl)
 	mockObserver2 := mockaudit.NewMockObserver(ctrl)
 
-	mockObserver1.EXPECT().Observe(gomock.Any()).Return(nil)
+	mockObserver1.EXPECT().Observe(t.Context(), gomock.Any()).Return(nil)
 	mockObserver1.EXPECT().Close()
-	mockObserver2.EXPECT().Observe(gomock.Any()).Return(nil)
+	mockObserver2.EXPECT().Observe(t.Context(), gomock.Any()).Return(nil)
 	mockObserver2.EXPECT().Close()
 
 	publisher := audit.NewEvent()
 	publisher.Register(mockObserver1)
 	publisher.Register(mockObserver2)
 
-	require.NoError(t, publisher.Notify(t.Context(), []string{"a"}, "0.0.0.0"))
+	publisher.Notify(t.Context(), []string{"a"}, "0.0.0.0")
+	time.Sleep(time.Millisecond * 100)
 	require.NoError(t, publisher.Close())
 }
 
@@ -38,19 +40,16 @@ func TestFileAudit(t *testing.T) {
 	dir := t.TempDir()
 
 	tests := []struct {
-		name           string
-		cfg            *config.ServerCnf
-		isFileExpected bool
+		name string
+		cfg  *config.ServerCnf
 	}{
 		{
-			name:           "file audit not create",
-			cfg:            &config.ServerCnf{},
-			isFileExpected: false,
+			name: "file audit not create",
+			cfg:  &config.ServerCnf{},
 		},
 		{
-			name:           "file audit create",
-			cfg:            &config.ServerCnf{AuditFile: filepath.Join(dir, "testFileAudit.log")},
-			isFileExpected: false,
+			name: "file audit create",
+			cfg:  &config.ServerCnf{AuditFile: filepath.Join(dir, "testFileAudit.log")},
 		},
 	}
 
@@ -62,7 +61,8 @@ func TestFileAudit(t *testing.T) {
 			publisher, err := audit.NewAudit(tt.cfg)
 			require.NoError(t, err)
 
-			require.NoError(t, publisher.Notify(t.Context(), []string{"a"}, "0.0.0.0"))
+			publisher.Notify(t.Context(), []string{"a"}, "0.0.0.0")
+			time.Sleep(time.Millisecond * 100)
 			require.NoError(t, publisher.Close())
 
 			if tt.cfg.AuditFile != "" {

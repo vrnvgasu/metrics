@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/response"
-	"github.com/vrnvgasu/metrics/internal/logger"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
@@ -45,9 +44,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 
-	if err := h.publisher.Notify(c, []string{body.ID}, c.ClientIP()); err != nil {
-		logger.Log.Errorf("failed to notify audit: %s", err.Error())
-	}
+	h.publisher.Notify(c, []string{body.ID}, c.ClientIP())
 
 	c.JSON(http.StatusOK, http.NoBody)
 }
@@ -72,9 +69,7 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 		return
 	}
 
-	if err := h.publisher.Notify(c, metricList.IDList(), c.ClientIP()); err != nil {
-		logger.Log.Errorf("failed to notify audit: %s", err.Error())
-	}
+	h.publisher.Notify(c, metricList.IDList(), c.ClientIP())
 
 	c.JSON(http.StatusOK, http.NoBody)
 }

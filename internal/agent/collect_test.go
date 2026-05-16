@@ -121,10 +121,12 @@ func BenchmarkAddStatsMetric(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		a.addStatsMetric(memStats)
+		b.StopTimer()
 		// чтобы не блокировать следующую итерацию
 		for len(a.Metrics) > 0 {
 			<-a.Metrics
 		}
+		b.StartTimer()
 	}
 }
 
@@ -134,6 +136,8 @@ func BenchmarkAddRandomValue(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		a.addRandomValue()
+		b.StopTimer()
 		<-a.Metrics
+		b.StartTimer()
 	}
 }

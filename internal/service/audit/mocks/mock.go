@@ -10,11 +10,11 @@
 package mock_audit
 
 import (
+	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	audit "github.com/vrnvgasu/metrics/internal/service/audit"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockObserver is a mock of Observer interface.
@@ -56,15 +56,15 @@ func (mr *MockObserverMockRecorder) Close() *gomock.Call {
 }
 
 // Observe mocks base method.
-func (m *MockObserver) Observe(arg0 audit.EventMessage) error {
+func (m *MockObserver) Observe(arg0 context.Context, arg1 audit.EventMessage) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Observe", arg0)
+	ret := m.ctrl.Call(m, "Observe", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Observe indicates an expected call of Observe.
-func (mr *MockObserverMockRecorder) Observe(arg0 any) *gomock.Call {
+func (mr *MockObserverMockRecorder) Observe(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Observe", reflect.TypeOf((*MockObserver)(nil).Observe), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Observe", reflect.TypeOf((*MockObserver)(nil).Observe), arg0, arg1)
 }

@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/vrnvgasu/metrics/internal/config"
@@ -8,7 +9,7 @@ import (
 
 //go:generate mockgen -destination=./mocks/mock.go . Observer
 type Observer interface {
-	Observe(EventMessage) error
+	Observe(context.Context, EventMessage) error
 	Close() error
 }
 

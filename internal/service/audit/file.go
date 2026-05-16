@@ -1,14 +1,17 @@
 package audit
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 )
 
 type FileAudit struct {
 	file    *os.File
 	encoder *json.Encoder
+	mu      sync.Mutex
 }
 
 func NewFileAudit(filename string) (*FileAudit, error) {
@@ -25,7 +28,14 @@ func NewFileAudit(filename string) (*FileAudit, error) {
 	}, nil
 }
 
-func (a *FileAudit) Observe(e EventMessage) error {
+func (a *FileAudit) Observe(ctx context.Context, e EventMessage) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	return a.encoder.Encode(e)
 }
 
