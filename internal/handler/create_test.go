@@ -14,12 +14,16 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/internal/repository/mem"
+	"github.com/vrnvgasu/metrics/internal/service/audit"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/pkg/helper"
 )
 
 func TestUpdateJSON(t *testing.T) {
 	t.Parallel()
+
+	publisher, err := audit.NewAudit(&config.ServerCnf{})
+	require.NoError(t, err)
 
 	const path = "/update/"
 
@@ -95,7 +99,7 @@ func TestUpdateJSON(t *testing.T) {
 
 			repo := mem.NewMemStorage()
 			s := metric.NewService(repo)
-			h := NewHandler(s, nil, &config.ServerCnf{})
+			h := NewHandler(s, nil, publisher, &config.ServerCnf{})
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -143,7 +147,11 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 
 	repo := mem.NewMemStorage()
 	s := metric.NewService(repo)
-	h := NewHandler(s, nil, &config.ServerCnf{})
+
+	publisher, err := audit.NewAudit(&config.ServerCnf{})
+	require.NoError(t, err)
+
+	h := NewHandler(s, nil, publisher, &config.ServerCnf{})
 
 	body, err := json.Marshal(updateRequest)
 	require.NoError(t, err)

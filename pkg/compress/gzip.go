@@ -1,20 +1,46 @@
+// Package compress предоставляет утилиты для сжатия данных.
 package compress
 
 import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"sync"
 )
 
-func GzipCompress(data []byte) ([]byte, error) {
-	buf := bytes.Buffer{}
-	writer := gzip.NewWriter(&buf)
+var bufPool = sync.Pool{
+	New: func() any {
+		return &bytes.Buffer{}
+	},
+}
 
-	if _, err := writer.Write(data); err != nil {
+var gzipWriterPool = sync.Pool{
+	New: func() any {
+		w, _ := gzip.NewWriterLevel(nil, gzip.BestSpeed)
+		return w
+	},
+}
+
+// GzipCompress сжимает данные алгоритмом gzip. Использует sync.Pool для переиспользования буферов.
+func GzipCompress(data []byte) ([]byte, error) {
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufPool.Put(buf)
+
+	w := gzipWriterPool.Get().(*gzip.Writer)
+	w.Reset(buf)
+	defer gzipWriterPool.Put(w)
+
+	if _, err := w.Write(data); err != nil {
 		return nil, fmt.Errorf("failed to compress data: %w", err)
 	}
 
-	writer.Close()
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close gzip writer: %w", err)
+	}
 
-	return buf.Bytes(), nil
+	result := make([]byte, buf.Len())
+	copy(result, buf.Bytes())
+
+	return result, nil
 }

@@ -10,15 +10,17 @@ import (
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
+// UpdateJSONRequest — тело запроса для POST /update/ и POST /updates.
 type UpdateJSONRequest struct {
-	ID    string   `json:"id" binding:"required"`   // имя метрики
-	MType string   `json:"type" binding:"required"` // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"`         // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"`         // значение метрики в случае передачи gauge
+	ID    string            `json:"id" binding:"required"`   // имя метрики
+	MType models.MetricType `json:"type" binding:"required"` // тип: gauge или counter
+	Delta *int64            `json:"delta,omitempty"`         // значение counter
+	Value *float64          `json:"value,omitempty"`         // значение gauge
 }
 
-func (r *UpdateJSONRequest) ToMetrics() *models.Metrics {
-	return &models.Metrics{
+// ToMetrics конвертирует запрос в модель Metrics.
+func (r *UpdateJSONRequest) ToMetrics() models.Metrics {
+	return models.Metrics{
 		ID:    r.ID,
 		MType: r.MType,
 		Delta: r.Delta,
@@ -26,6 +28,7 @@ func (r *UpdateJSONRequest) ToMetrics() *models.Metrics {
 	}
 }
 
+// UpdateJSON обрабатывает POST /update/ — обновляет одну метрику из JSON-тела.
 func (h *Handler) UpdateJSON(c *gin.Context) {
 	var body UpdateJSONRequest
 
@@ -35,15 +38,18 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 
-	if err := h.MetricService.CreateOrUpdate(c, []*models.Metrics{body.ToMetrics()}); err != nil {
+	if err := h.MetricService.CreateOrUpdate(c, []models.Metrics{body.ToMetrics()}); err != nil {
 		response.ResponseError(c, err)
 
 		return
 	}
 
+	h.publisher.Notify(c, []string{body.ID}, c.ClientIP())
+
 	c.JSON(http.StatusOK, http.NoBody)
 }
 
+// UpdateJSONList обрабатывает POST /updates — пакетное обновление метрик из JSON-массива.
 func (h *Handler) UpdateJSONList(c *gin.Context) {
 	var body []UpdateJSONRequest
 
@@ -53,15 +59,17 @@ func (h *Handler) UpdateJSONList(c *gin.Context) {
 		return
 	}
 
-	metrics := make([]*models.Metrics, 0, len(body))
+	metricList := make(models.MetricsList, 0, len(body))
 	for _, v := range body {
-		metrics = append(metrics, v.ToMetrics())
+		metricList = append(metricList, v.ToMetrics())
 	}
-	if err := h.MetricService.CreateOrUpdate(c, metrics); err != nil {
+	if err := h.MetricService.CreateOrUpdate(c, metricList); err != nil {
 		response.ResponseError(c, err)
 
 		return
 	}
+
+	h.publisher.Notify(c, metricList.IDList(), c.ClientIP())
 
 	c.JSON(http.StatusOK, http.NoBody)
 }

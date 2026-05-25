@@ -19,6 +19,9 @@ func parseFlags() *config.ServerCnf {
 	pflag.BoolVarP(&cnf.Restore, "restore", "r", true, "restore storage data")
 	pflag.StringVarP(&cnf.DatabaseDSN, "database_dsn", "d", "", "database DSN in format: host=localhost port=5432 user=metrics password=metrics dbname=metrics sslmode=disable")
 	pflag.StringVarP(&cnf.Key, "key", "k", "", "hash key")
+
+	pflag.StringVar(&cnf.AuditFile, "audit-file", "", "path to audit file")
+	pflag.StringVar(&cnf.AuditURL, "audit-url", "", "audit server URL")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

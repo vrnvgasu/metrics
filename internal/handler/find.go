@@ -6,14 +6,17 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/response"
+	models "github.com/vrnvgasu/metrics/internal/model"
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
+// FindRequest — параметры URL для GET /value/:mtype/:name.
 type FindRequest struct {
 	MType string `uri:"mtype" binding:"required"`
 	Name  string `uri:"name" binding:"required"`
 }
 
+// Find обрабатывает GET /value/:mtype/:name — возвращает значение метрики текстом.
 func (h *Handler) Find(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "text/plain")
 
@@ -24,14 +27,14 @@ func (h *Handler) Find(c *gin.Context) {
 		return
 	}
 
-	m, err := h.MetricService.FindByTypeAndID(c, req.MType, req.Name)
+	metrics, err := h.MetricService.FindByTypeAndID(c, models.MetricType(req.MType), req.Name)
 	if err != nil {
 		response.ResponseError(c, err)
 
 		return
 	}
 
-	if _, err = c.Writer.Write([]byte(m.ValueToString())); err != nil {
+	if _, err = c.Writer.Write([]byte(metrics.ValueToString())); err != nil {
 		response.ResponseError(c, err)
 
 		return

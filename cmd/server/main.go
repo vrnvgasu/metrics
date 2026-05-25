@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +15,7 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
+	"github.com/vrnvgasu/metrics/internal/service/audit"
 	"github.com/vrnvgasu/metrics/internal/service/healthcheck"
 	"github.com/vrnvgasu/metrics/internal/service/metric"
 	"github.com/vrnvgasu/metrics/internal/service/store"
@@ -44,7 +46,13 @@ func run() error {
 	metricService := metric.NewService(storage)
 	healthService := healthcheck.NewService(storage)
 
-	h := handler.NewHandler(metricService, healthService, cnf)
+	publisher, err := audit.NewAudit(cnf)
+	if err != nil {
+		return fmt.Errorf("could not initialize audit: %w", err)
+	}
+	defer publisher.Close()
+
+	h := handler.NewHandler(metricService, healthService, publisher, cnf)
 	router := handler.NewServer(handler.NewRouter(h), cnf)
 
 	storeService, err := store.NewService(storage, metricService, *cnf)
@@ -70,13 +78,19 @@ func start(
 	}
 
 	go func() {
-		log.Println("starting router on: ", cnf.Address)
+		logger.Log.Info("starting pprof server on: localhost:6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			logger.Log.Warnf("pprof server: %v", err)
+		}
+	}()
+	go func() {
+		logger.Log.Infof("starting router on: %s", cnf.Address)
 		if err := router.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
 	}()
 	go func() {
-		log.Printf("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
+		logger.Log.Infof("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
 		if err := server.StoreInterval(ctx); err != nil {
 			serverErr <- err
 		}
@@ -88,7 +102,7 @@ func start(
 func wait(ctx context.Context, serverErr chan error, router *handler.Server, server *store.Service) error {
 	select {
 	case <-ctx.Done():
-		log.Println("shutting down router")
+		logger.Log.Info("shutting down router")
 	case err := <-serverErr:
 		return fmt.Errorf("router error: %w", err)
 	}

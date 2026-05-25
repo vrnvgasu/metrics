@@ -16,6 +16,8 @@ const (
 	hashHeader = "HashSHA256"
 )
 
+// Hash — middleware для проверки подписи запроса через HMAC-SHA256 (заголовок HashSHA256).
+// Если ключ не задан в конфиге, проверка пропускается.
 func Hash(cnf *config.ServerCnf) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if cnf.Key == "" {
@@ -34,8 +36,6 @@ func Hash(cnf *config.ServerCnf) gin.HandlerFunc {
 			return
 		}
 
-		hh := c.Request.Header.Get(hashHeader)
-		_ = hh
 		if c.Request.Header.Get(hashHeader) != signature {
 			response.ResponseError(c, serviceerrors.BadRequestError())
 

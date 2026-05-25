@@ -10,11 +10,11 @@ import (
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
-func (s *Service) FindByTypeAndID(ctx context.Context, mtype, id string) (*models.Metrics, error) {
-	m, err := s.storage.GetByTypeAndID(ctx, mtype, id)
+func (s *Service) FindByTypeAndID(ctx context.Context, mtype models.MetricType, id string) (*models.Metrics, error) {
+	metrics, err := s.storage.GetByTypeAndID(ctx, mtype, id)
 	if err != nil && errors.Is(err, repository.ErrNotFound) {
 		return nil, serviceerrors.NotFoundError(fmt.Errorf("mtype not found: %w", err))
 	}
 
-	return m, err
+	return metrics, err
 }

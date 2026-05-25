@@ -1,5 +1,6 @@
 package config
 
+// ServerCnf — конфигурация сервера метрик.
 type ServerCnf struct {
 	Address         string `env:"ADDRESS"`
 	LogLevel        string `env:"LOG_LEVEL"`
@@ -8,6 +9,9 @@ type ServerCnf struct {
 	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	Key             string `env:"KEY"`
+
+	AuditFile string `env:"AUDIT_FILE"`
+	AuditURL  string `env:"AUDIT_URL"`
 }
 
 func (s *ServerCnf) String() string {

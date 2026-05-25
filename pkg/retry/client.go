@@ -7,15 +7,18 @@ import (
 	"net/http"
 )
 
+// ClientConfig — конфигурация HTTP-клиента с поддержкой retry.
 type ClientConfig struct {
 	retryConfig *RetryConfig
 }
 
+// Client — HTTP-клиент с автоматическими повторными попытками при 5xx-ошибках.
 type Client struct {
 	*http.Client
 	cnf *ClientConfig
 }
 
+// NewClient создает Client с переданным конфигом (nil — использует настройки по умолчанию).
 func NewClient(cfg *ClientConfig) *Client {
 	if cfg == nil {
 		cfg = &ClientConfig{}
@@ -27,6 +30,7 @@ func NewClient(cfg *ClientConfig) *Client {
 	}
 }
 
+// Do выполняет HTTP-запрос с повторными попытками при временных ошибках и 5xx-ответах.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	var bodyBytes []byte
 	if req.Body != nil {

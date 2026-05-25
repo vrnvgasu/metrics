@@ -13,11 +13,13 @@ import (
 //go:embed `templates`
 var tmplFS embed.FS
 
+// NewRouter создает gin.Engine с маршрутами и middleware (logger, gzip, recovery).
 func NewRouter(handler *Handler) *gin.Engine {
 	r := gin.New()
 
 	r.Use(middleware.Logger())
 	r.Use(middleware.Gzip())
+	r.Use(gin.Recovery())
 
 	sub, _ := fs.Sub(tmplFS, "templates")
 	r.LoadHTMLFS(http.FS(sub), "*")

@@ -10,18 +10,21 @@ import (
 	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 )
 
+// ValueRequest — тело запроса для POST /value/.
 type ValueRequest struct {
-	ID    string `json:"id" binding:"required"`
-	MType string `json:"type" binding:"required"`
+	ID    string            `json:"id" binding:"required"`
+	MType models.MetricType `json:"type" binding:"required"`
 }
 
+// ValueResponse — JSON-ответ с данными метрики.
 type ValueResponse struct {
-	ID    string   `json:"id"`
-	MType string   `json:"type"`
-	Delta *int64   `json:"delta,omitempty"`
-	Value *float64 `json:"value,omitempty"`
+	ID    string            `json:"id"`
+	MType models.MetricType `json:"type"`
+	Delta *int64            `json:"delta,omitempty"`
+	Value *float64          `json:"value,omitempty"`
 }
 
+// NewValueResponseFromMetric создает ValueResponse из модели.
 func NewValueResponseFromMetric(m models.Metrics) ValueResponse {
 	return ValueResponse{
 		ID:    m.ID,
@@ -31,6 +34,7 @@ func NewValueResponseFromMetric(m models.Metrics) ValueResponse {
 	}
 }
 
+// Value обрабатывает POST /value/ — возвращает метрику по JSON-запросу.
 func (h *Handler) Value(c *gin.Context) {
 	var body ValueRequest
 

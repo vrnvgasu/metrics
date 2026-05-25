@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// ServiceErrorType — строковый тип ошибки сервиса.
 type ServiceErrorType string
 
 const (
@@ -15,6 +16,7 @@ const (
 	ErrServiceUnavailableError ServiceErrorType = "service unavailable"
 )
 
+// ServiceError — структурированная ошибка сервисного слоя с HTTP-кодом.
 type ServiceError struct {
 	Type        ServiceErrorType
 	Message     string
@@ -30,6 +32,7 @@ func (s *ServiceError) Error() string {
 	return fmt.Sprintf("[%s]: %s", s.Type, s.Message)
 }
 
+// NotFoundError возвращает ошибку 404.
 func NotFoundError(err error) error {
 	return &ServiceError{
 		Type:        ErrNotFound,
@@ -39,6 +42,7 @@ func NotFoundError(err error) error {
 	}
 }
 
+// UnprocessableEntity возвращает ошибку 422.
 func UnprocessableEntity() error {
 	return &ServiceError{
 		Type:     ErrUnprocessableEntity,
@@ -47,6 +51,7 @@ func UnprocessableEntity() error {
 	}
 }
 
+// BadRequestError возвращает ошибку 400.
 func BadRequestError() error {
 	return &ServiceError{
 		Type:     ErrBadRequest,
@@ -55,6 +60,7 @@ func BadRequestError() error {
 	}
 }
 
+// InternalError возвращает ошибку 500.
 func InternalError() error {
 	return &ServiceError{
 		Type:     ErrInternal,

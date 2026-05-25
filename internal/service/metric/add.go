@@ -9,7 +9,7 @@ import (
 	"github.com/vrnvgasu/metrics/internal/repository"
 )
 
-func (s *Service) CreateOrUpdate(ctx context.Context, list []*models.Metrics) error {
+func (s *Service) CreateOrUpdate(ctx context.Context, list models.MetricsList) error {
 	err := s.storage.DoInTransaction(ctx, func(ctx context.Context) error {
 		return s.createOrUpdate(ctx, list)
 	})
@@ -21,19 +21,19 @@ func (s *Service) CreateOrUpdate(ctx context.Context, list []*models.Metrics) er
 	return nil
 }
 
-func (s *Service) createOrUpdate(ctx context.Context, list []*models.Metrics) error {
-	for _, m := range list {
-		switch m.MType {
+func (s *Service) createOrUpdate(ctx context.Context, list models.MetricsList) error {
+	for _, metrics := range list {
+		switch metrics.MType {
 		case models.Gauge:
-			if err := s.addGauge(ctx, m); err != nil {
+			if err := s.addGauge(ctx, &metrics); err != nil {
 				return fmt.Errorf("metric.createOrUpdate addGauge: %w", err)
 			}
 		case models.Counter:
-			if err := s.addCounter(ctx, m); err != nil {
+			if err := s.addCounter(ctx, &metrics); err != nil {
 				return fmt.Errorf("metric.createOrUpdate addCounter: %w", err)
 			}
 		default:
-			return fmt.Errorf("metrics type %s not supported: %w", m.MType, repository.ErrNotSupport)
+			return fmt.Errorf("metrics type %s not supported: %w", metrics.MType, repository.ErrNotSupport)
 		}
 	}
 

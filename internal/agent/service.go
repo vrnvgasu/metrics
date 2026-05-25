@@ -9,11 +9,13 @@ import (
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
 
+// Client — интерфейс HTTP-клиента агента.
 type Client interface {
 	Post(url, contentType string, body io.Reader) (resp *http.Response, err error)
 	Do(req *http.Request) (resp *http.Response, err error)
 }
 
+// Agent собирает и отправляет метрики на сервер.
 type Agent struct {
 	Client    Client
 	Metrics   chan models.Metrics
@@ -21,6 +23,7 @@ type Agent struct {
 	mu        sync.Mutex
 }
 
+// NewAgent создает агента с буфером канала метрик размером bufSize.
 func NewAgent(client Client, bufSize int) *Agent {
 	return &Agent{
 		Client:  client,
@@ -30,13 +33,4 @@ func NewAgent(client Client, bufSize int) *Agent {
 
 func (a *Agent) pushMetric(m models.Metrics) {
 	a.Metrics <- m
-}
-
-func (a *Agent) pollMetric() *models.Metrics {
-	select {
-	case m := <-a.Metrics:
-		return &m
-	default:
-		return nil
-	}
 }
