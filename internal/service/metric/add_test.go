@@ -2,6 +2,7 @@ package metric
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -54,6 +55,30 @@ func Test_createOrUpdate(t *testing.T) {
 			m:    models.Metrics{ID: "1", MType: "dummy"},
 			storage: func() repository.Storage {
 				storageMock := mockrepository.NewMockStorage(controller)
+
+				return storageMock
+			},
+			expectedErr: require.Error,
+		},
+		{
+			name: "counter exists; accumulate delta",
+			m:    models.Metrics{ID: "1", MType: models.Counter, Delta: helper.NewRefInt64(5)},
+			storage: func() repository.Storage {
+				storageMock := mockrepository.NewMockStorage(controller)
+				existing := models.Metrics{ID: "1", MType: models.Counter, Delta: helper.NewRefInt64(10)}
+				storageMock.EXPECT().GetByTypeAndID(gomock.Any(), models.Counter, "1").Return(&existing, nil)
+				storageMock.EXPECT().Save(gomock.Any(), gomock.Any()).Return(nil)
+
+				return storageMock
+			},
+			expectedErr: require.NoError,
+		},
+		{
+			name: "counter get storage error",
+			m:    models.Metrics{ID: "1", MType: models.Counter, Delta: helper.NewRefInt64(5)},
+			storage: func() repository.Storage {
+				storageMock := mockrepository.NewMockStorage(controller)
+				storageMock.EXPECT().GetByTypeAndID(gomock.Any(), models.Counter, "1").Return(nil, errors.New("db error"))
 
 				return storageMock
 			},
