@@ -1,3 +1,4 @@
+// Package provider содержит Producer и Consumer для файлового хранения метрик.
 package provider
 
 import (

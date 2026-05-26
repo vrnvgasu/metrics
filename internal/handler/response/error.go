@@ -1,3 +1,4 @@
+// Package response содержит вспомогательные функции формирования HTTP-ответов.
 package response
 
 import (

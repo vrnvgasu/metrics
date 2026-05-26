@@ -1,3 +1,4 @@
+// Package errors определяет типизированные ошибки сервисного слоя с HTTP-кодами.
 package errors
 
 import (

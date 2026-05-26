@@ -1,3 +1,4 @@
+// Package metric реализует бизнес-логику работы с метриками.
 package metric
 
 import (
