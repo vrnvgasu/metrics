@@ -21,10 +21,22 @@ import (
 	"github.com/vrnvgasu/metrics/internal/service/store"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func info() {
+	logger.Log.Infof("Build version: %s", buildVersion)
+	logger.Log.Infof("Build date: %s", buildDate)
+	logger.Log.Infof("Build commit: %s", buildCommit)
 }
 
 func run() error {
@@ -37,6 +49,8 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("could not initialize logger: %w", err)
 	}
+
+	info()
 
 	storage, err := initStorage(ctx, cnf)
 	if err != nil {
