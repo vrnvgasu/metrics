@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -13,8 +14,9 @@ import (
 	"github.com/vrnvgasu/metrics/pkg/hash"
 )
 
-func init() {
+func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
+	os.Exit(m.Run())
 }
 
 func hashRouter(cnf *config.ServerCnf) http.Handler {

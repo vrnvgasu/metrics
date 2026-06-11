@@ -19,6 +19,8 @@ type MetricService interface {
 }
 
 // HealthService — интерфейс проверки доступности хранилища.
+//
+//go:generate mockgen -destination=./mocks/mock.go . HealthService
 type HealthService interface {
 	// CheckPing проверяет соединение с хранилищем.
 	CheckPing(ctx context.Context) error

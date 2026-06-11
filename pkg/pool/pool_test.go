@@ -20,17 +20,26 @@ func (t *testItem) Reset() {
 func TestPool_GetReturnsNewObject(t *testing.T) {
 	t.Parallel()
 
-	p := pool.New(func() *testItem { return &testItem{} })
+	p, err := pool.New(func() *testItem { return &testItem{} })
+	require.NoError(t, err)
 	obj := p.Get()
 	require.NotNil(t, obj)
+}
+
+func TestPool_New_NilReturnsError(t *testing.T) {
+	t.Parallel()
+
+	_, err := pool.New[*testItem](nil)
+	require.Error(t, err)
 }
 
 func TestPool_PutResetsState(t *testing.T) {
 	t.Parallel()
 
-	p := pool.New(func() *testItem {
+	p, err := pool.New(func() *testItem {
 		return &testItem{}
 	})
+	require.NoError(t, err)
 
 	obj := p.Get()
 	obj.Value = "dirty"

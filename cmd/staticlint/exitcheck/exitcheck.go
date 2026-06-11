@@ -36,11 +36,14 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					return true
 				}
 
-				pkg, ok := sel.X.(*ast.Ident)
-				if !ok {
+				if sel.Sel.Name != "Exit" {
 					return true
 				}
-				if pkg.Name == "os" && sel.Sel.Name == "Exit" {
+				obj, ok := pass.TypesInfo.Uses[sel.Sel]
+				if !ok || obj.Pkg() == nil {
+					return true
+				}
+				if obj.Pkg().Path() == "os" {
 					pass.Reportf(call.Pos(), "direct call to os.Exit in main function is not allowed; use log.Fatal or return an error instead")
 				}
 			}

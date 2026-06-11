@@ -120,7 +120,8 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "walk: %v\n", err)
+		os.Exit(1)
 	}
 
 	// Компилируем шаблон один раз — он будет использован для всех пакетов.
