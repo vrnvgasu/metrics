@@ -1,3 +1,4 @@
+// Package logger предоставляет глобальный логгер на основе zap.
 package logger
 
 import (

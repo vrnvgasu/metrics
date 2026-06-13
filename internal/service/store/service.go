@@ -1,3 +1,4 @@
+// Package store реализует сервис персистентного хранения метрик в файл.
 package store
 
 import (

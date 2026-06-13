@@ -5,6 +5,8 @@ build:
 	@go build -o cmd/server/server cmd/server/main.go cmd/server/flags.go cmd/server/app.go
 	@echo "build agent"
 	@go build -o cmd/agent/agent cmd/agent/main.go cmd/agent/flags.go
+	@echo "build staticlint"
+	@go build -o cmd/staticlint/staticlint cmd/staticlint/main.go
 
 .PHONY: test
 test:

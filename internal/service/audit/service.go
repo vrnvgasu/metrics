@@ -1,3 +1,4 @@
+// Package audit реализует сервис аудита событий (Observer/Publisher).
 package audit
 
 import (

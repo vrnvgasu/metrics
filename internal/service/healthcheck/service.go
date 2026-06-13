@@ -1,3 +1,4 @@
+// Package healthcheck реализует проверку доступности хранилища.
 package healthcheck
 
 import (

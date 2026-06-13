@@ -1,3 +1,4 @@
+// Package middleware содержит HTTP-middleware: сжатие gzip, хэширование, логирование.
 package middleware
 
 import (

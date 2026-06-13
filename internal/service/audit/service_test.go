@@ -1,6 +1,8 @@
 package audit_test
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 	"time"
@@ -39,6 +41,11 @@ func TestFileAudit(t *testing.T) {
 
 	dir := t.TempDir()
 
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
 	tests := []struct {
 		name string
 		cfg  *config.ServerCnf
@@ -50,6 +57,10 @@ func TestFileAudit(t *testing.T) {
 		{
 			name: "file audit create",
 			cfg:  &config.ServerCnf{AuditFile: filepath.Join(dir, "testFileAudit.log")},
+		},
+		{
+			name: "url audit create",
+			cfg:  &config.ServerCnf{AuditURL: srv.URL},
 		},
 	}
 
@@ -70,4 +81,23 @@ func TestFileAudit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestURLAudit(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
+	a := audit.NewURLAudit(srv.URL)
+
+	err := a.Observe(t.Context(), audit.EventMessage{
+		Ts:        time.Now().Unix(),
+		Metrics:   []string{"test"},
+		IpAddress: "127.0.0.1",
+	})
+	require.NoError(t, err)
+	require.NoError(t, a.Close())
 }

@@ -79,3 +79,23 @@ Dropped 1 node (cum <= 62.83kB)
  -512.02kB  4.07% 20.41%  -512.02kB  4.07%  github.com/go-playground/validator/v10.lazyRegexCompile (inline)
  -512.02kB  4.07% 24.48%  -512.02kB  4.07%  reflect.packEface
 ```
+
+## Сборка с информацией о версии (iter23)
+
+Сервер и агент поддерживают переменные `buildVersion`, `buildDate`, `buildCommit`, которые задаются при компиляции через `-ldflags`:
+
+```sh
+go build -ldflags "\
+  -X main.buildVersion=1.0.0 \
+  -X main.buildDate=$(date +%Y-%m-%d) \
+  -X main.buildCommit=$(git rev-parse --short HEAD)" \
+  ./cmd/server
+
+go build -ldflags "\
+  -X main.buildVersion=1.0.0 \
+  -X main.buildDate=$(date +%Y-%m-%d) \
+  -X main.buildCommit=$(git rev-parse --short HEAD)" \
+  ./cmd/agent
+```
+
+При запуске значения выводятся в лог/stdout. По умолчанию — `N/A`.
