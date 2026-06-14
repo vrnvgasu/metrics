@@ -22,6 +22,7 @@ func parseFlags() *config.ServerCnf {
 
 	pflag.StringVar(&cnf.AuditFile, "audit-file", "", "path to audit file")
 	pflag.StringVar(&cnf.AuditURL, "audit-url", "", "audit server URL")
+	pflag.StringVar(&cnf.CryptoKey, "crypto-key", "", "path to private key file for decryption")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

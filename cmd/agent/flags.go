@@ -17,6 +17,7 @@ func parseFlags() *config.AgentCnf {
 	pflag.IntVarP(&cnf.PollInterval, "pollInterval", "p", 2, "frequency of polling metrics from the package")
 	pflag.StringVarP(&cnf.Key, "key", "k", "", "hash key")
 	pflag.StringVarP(&cnf.Key, "rateLimit", "l", "", "rate limit")
+	pflag.StringVar(&cnf.CryptoKey, "crypto-key", "", "path to public key file for encryption")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

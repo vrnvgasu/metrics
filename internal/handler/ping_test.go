@@ -66,7 +66,7 @@ func TestPing(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/ping", http.NoBody)
 			w := httptest.NewRecorder()
 
-			NewRouter(h).ServeHTTP(w, req)
+			mustNewRouter(t, h).ServeHTTP(w, req)
 
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})

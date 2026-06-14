@@ -14,13 +14,15 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 	models "github.com/vrnvgasu/metrics/internal/model"
 	"github.com/vrnvgasu/metrics/pkg/compress"
+	"github.com/vrnvgasu/metrics/pkg/crypto"
 	"github.com/vrnvgasu/metrics/pkg/hash"
 )
 
 const (
-	path       = "updates"
-	batchCount = 100
-	hashHeader = "HashSHA256"
+	path            = "updates"
+	batchCount      = 100
+	hashHeader      = "HashSHA256"
+	encryptedHeader = "X-Encrypted"
 )
 
 func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
@@ -100,8 +102,16 @@ func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
 		return fmt.Errorf("agent.SendBatch GzipCompress: %w", err)
 	}
 
+	sendBody := cBody
+	if a.publicKey != nil {
+		sendBody, err = crypto.Encrypt(a.publicKey, cBody)
+		if err != nil {
+			return fmt.Errorf("agent.SendBatch Encrypt: %w", err)
+		}
+	}
+
 	updateURL := fmt.Sprintf("http://%s/%s", cnf.Address, path)
-	req, err := http.NewRequest(http.MethodPost, updateURL, bytes.NewBuffer(cBody))
+	req, err := http.NewRequest(http.MethodPost, updateURL, bytes.NewBuffer(sendBody))
 	if err != nil {
 		return fmt.Errorf("agent.SendBatch NewRequest: %w", err)
 	}
@@ -112,6 +122,10 @@ func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
+	if a.publicKey != nil {
+		req.Header.Set(encryptedHeader, "true")
+	}
+
 	resp, err := a.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("agent.SendBatch Do: %w", err)

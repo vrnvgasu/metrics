@@ -12,6 +12,7 @@ type AgentCnf struct {
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	Key            string `env:"KEY"`
 	RateLimit      int    `env:"RATE_LIMIT"`
+	CryptoKey      string `env:"CRYPTO_KEY"`
 }
 
 func (a *AgentCnf) String() string {

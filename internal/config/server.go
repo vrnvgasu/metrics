@@ -9,6 +9,7 @@ type ServerCnf struct {
 	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	Key             string `env:"KEY"`
+	CryptoKey       string `env:"CRYPTO_KEY"`
 
 	AuditFile string `env:"AUDIT_FILE"`
 	AuditURL  string `env:"AUDIT_URL"`

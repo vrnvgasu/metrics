@@ -106,7 +106,7 @@ func TestUpdateJSON(t *testing.T) {
 			request := httptest.NewRequest(tt.method, path, bytes.NewBuffer(body))
 			w := httptest.NewRecorder()
 
-			NewRouter(h).ServeHTTP(w, request)
+			mustNewRouter(t, h).ServeHTTP(w, request)
 
 			res := w.Result()
 			res.Body.Close()
@@ -165,7 +165,7 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 	request.Header.Set("Content-Encoding", "gzip")
 	w := httptest.NewRecorder()
 
-	NewRouter(h).ServeHTTP(w, request)
+	mustNewRouter(t, h).ServeHTTP(w, request)
 
 	res := w.Result()
 	res.Body.Close()

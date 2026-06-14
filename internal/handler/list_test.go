@@ -69,7 +69,7 @@ func TestList(t *testing.T) {
 			request := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			w := httptest.NewRecorder()
 
-			NewRouter(h).ServeHTTP(w, request)
+			mustNewRouter(t, h).ServeHTTP(w, request)
 
 			res := w.Result()
 			res.Body.Close()

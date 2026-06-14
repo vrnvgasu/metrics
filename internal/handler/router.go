@@ -1,23 +1,36 @@
 package handler
 
 import (
+	"crypto/rsa"
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/middleware"
+	"github.com/vrnvgasu/metrics/pkg/crypto"
 )
 
 //go:embed `templates`
 var tmplFS embed.FS
 
-// NewRouter создает gin.Engine с маршрутами и middleware (logger, gzip, recovery).
-func NewRouter(handler *Handler) *gin.Engine {
+// NewRouter создает gin.Engine с маршрутами и middleware (logger, decrypt, gzip, recovery).
+func NewRouter(handler *Handler) (*gin.Engine, error) {
+	var privateKey *rsa.PrivateKey
+	if handler.cfg.CryptoKey != "" {
+		var err error
+		privateKey, err = crypto.LoadPrivateKey(handler.cfg.CryptoKey)
+		if err != nil {
+			return nil, fmt.Errorf("handler.NewRouter LoadPrivateKey: %w", err)
+		}
+	}
+
 	r := gin.New()
 
 	r.Use(middleware.Logger())
+	r.Use(middleware.Decrypt(privateKey))
 	r.Use(middleware.Gzip())
 	r.Use(gin.Recovery())
 
@@ -42,5 +55,5 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 	r.GET("/ping", handler.Ping)
 
-	return r
+	return r, nil
 }
