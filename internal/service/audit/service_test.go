@@ -86,18 +86,34 @@ func TestFileAudit(t *testing.T) {
 func TestURLAudit(t *testing.T) {
 	t.Parallel()
 
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	t.Cleanup(srv.Close)
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
 
-	a := audit.NewURLAudit(srv.URL)
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(srv.Close)
 
-	err := a.Observe(t.Context(), audit.EventMessage{
-		Ts:        time.Now().Unix(),
-		Metrics:   []string{"test"},
-		IpAddress: "127.0.0.1",
+		a := audit.NewURLAudit(srv.URL)
+		err := a.Observe(t.Context(), audit.EventMessage{
+			Ts:        time.Now().Unix(),
+			Metrics:   []string{"test"},
+			IpAddress: "127.0.0.1",
+		})
+		require.NoError(t, err)
+		require.NoError(t, a.Close())
 	})
-	require.NoError(t, err)
-	require.NoError(t, a.Close())
+
+	t.Run("server error", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		t.Cleanup(srv.Close)
+
+		a := audit.NewURLAudit(srv.URL)
+		err := a.Observe(t.Context(), audit.EventMessage{})
+		require.Error(t, err)
+	})
 }
