@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,4 +44,32 @@ func TestServerCnf_Set(t *testing.T) {
 func TestServerCnf_Type(t *testing.T) {
 	t.Parallel()
 	assert.NotEmpty(t, (&ServerCnf{}).Type())
+}
+
+func TestNewServerCnf(t *testing.T) {
+	t.Parallel()
+	cnf := NewServerCnf()
+	assert.Equal(t, "localhost:8080", cnf.Address)
+	assert.Equal(t, 300, cnf.StoreInterval)
+	assert.Equal(t, "store.json", cnf.FileStoragePath)
+	assert.True(t, cnf.Restore)
+}
+
+func TestNewAgentCnf(t *testing.T) {
+	t.Parallel()
+	cnf := NewAgentCnf()
+	assert.Equal(t, "localhost:8080", cnf.Address)
+	assert.Equal(t, 10, cnf.ReportInterval)
+	assert.Equal(t, 2, cnf.PollInterval)
+}
+
+func writeTempFile(t *testing.T, content string) string {
+	t.Helper()
+	f, err := os.CreateTemp("", "cnf_*.json")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.Remove(f.Name()) })
+	_, err = f.WriteString(content)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+	return f.Name()
 }

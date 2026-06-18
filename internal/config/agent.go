@@ -13,6 +13,15 @@ type AgentCnf struct {
 	Key            string `env:"KEY"`
 	RateLimit      int    `env:"RATE_LIMIT"`
 	CryptoKey      string `env:"CRYPTO_KEY"`
+	ConfigFile     string `env:"CONFIG"`
+}
+
+func NewAgentCnf() *AgentCnf {
+	return &AgentCnf{
+		Address:        "localhost:8080",
+		ReportInterval: 10,
+		PollInterval:   2,
+	}
 }
 
 func (a *AgentCnf) String() string {
