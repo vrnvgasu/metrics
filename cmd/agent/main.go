@@ -48,7 +48,7 @@ func run() error {
 		}
 		agentClient.SetPublicKey(pub)
 	}
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
 	errGroup, runtimeCtx := errgroup.WithContext(ctx)

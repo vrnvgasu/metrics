@@ -42,7 +42,7 @@ func info() {
 func run() error {
 	cnf := parseFlags()
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
 	err := logger.Initialize(cnf.LogLevel)

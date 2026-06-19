@@ -30,21 +30,8 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 
 	go func() {
 		defer close(chMetrics)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case m, ok := <-a.Metrics:
-				if !ok {
-					return
-				}
-				select {
-				case <-ctx.Done():
-					return
-				case chMetrics <- &m:
-				}
-			}
+		for m := range a.Metrics {
+			chMetrics <- &m
 		}
 	}()
 
@@ -71,7 +58,6 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 
 				select {
 				case <-ctx.Done():
-					return ctx.Err()
 				case <-time.After(time.Duration(cnf.ReportInterval) * time.Second):
 				}
 			}

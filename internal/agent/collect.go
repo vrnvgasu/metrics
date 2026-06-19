@@ -204,6 +204,7 @@ func (a *Agent) Collect(ctx context.Context, cnf *config.AgentCnf) error {
 		return fmt.Errorf("agent collect: %w", err)
 	}
 
+	close(a.Metrics)
 	return nil
 }
 
