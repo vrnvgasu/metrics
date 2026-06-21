@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,34 +29,6 @@ func TestParseDurationSec(t *testing.T) {
 			got, ok := parseDurationSec(tt.input)
 			assert.Equal(t, tt.wantOk, ok)
 			assert.Equal(t, tt.wantSec, got)
-		})
-	}
-}
-
-func TestFindConfigPath(t *testing.T) {
-	tests := []struct {
-		name   string
-		args   []string
-		envVal string
-		want   string
-	}{
-		{"short flag", []string{"app", "-c", "/tmp/cfg.json"}, "", "/tmp/cfg.json"},
-		{"short flag equals", []string{"app", "-c=/tmp/cfg.json"}, "", "/tmp/cfg.json"},
-		{"long flag", []string{"app", "--config", "/tmp/cfg.json"}, "", "/tmp/cfg.json"},
-		{"long flag equals", []string{"app", "--config=/tmp/cfg.json"}, "", "/tmp/cfg.json"},
-		{"env var", []string{"app"}, "/tmp/env.json", "/tmp/env.json"},
-		{"flag beats env", []string{"app", "-c", "/tmp/flag.json"}, "/tmp/env.json", "/tmp/flag.json"},
-		{"empty", []string{"app"}, "", ""},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			origArgs := os.Args
-			defer func() { os.Args = origArgs }()
-			require.NoError(t, os.Setenv("CONFIG", tt.envVal))
-			defer os.Unsetenv("CONFIG")
-
-			os.Args = tt.args
-			assert.Equal(t, tt.want, FindConfigPath())
 		})
 	}
 }

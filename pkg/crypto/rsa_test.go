@@ -4,13 +4,10 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/pem"
-	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,44 +22,38 @@ func writeTempPEM(t *testing.T, blockType string, data []byte) string {
 	return f.Name()
 }
 
-func genKeyPair(t *testing.T) (certPath, keyPath string) {
+func genKeyPair(t *testing.T) (pubPath, keyPath string) {
 	t.Helper()
 
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
-	tmpl := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
-		Subject:      pkix.Name{Organization: []string{"Test"}},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(time.Hour),
-	}
-	certBytes, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &priv.PublicKey, priv)
+	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
 	require.NoError(t, err)
 
 	dir := t.TempDir()
-	certPath = filepath.Join(dir, "cert.pem")
+	pubPath = filepath.Join(dir, "public.pem")
 	keyPath = filepath.Join(dir, "private.pem")
 
-	cf, err := os.Create(certPath)
+	pf, err := os.Create(pubPath)
 	require.NoError(t, err)
-	require.NoError(t, pem.Encode(cf, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}))
-	cf.Close()
+	require.NoError(t, pem.Encode(pf, &pem.Block{Type: "PUBLIC KEY", Bytes: pubBytes}))
+	pf.Close()
 
 	kf, err := os.Create(keyPath)
 	require.NoError(t, err)
 	require.NoError(t, pem.Encode(kf, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}))
 	kf.Close()
 
-	return certPath, keyPath
+	return pubPath, keyPath
 }
 
 func TestLoadPublicKey(t *testing.T) {
 	t.Parallel()
 
-	certPath, _ := genKeyPair(t)
+	pubPath, _ := genKeyPair(t)
 
-	pub, err := LoadPublicKey(certPath)
+	pub, err := LoadPublicKey(pubPath)
 	require.NoError(t, err)
 	assert.NotNil(t, pub)
 }

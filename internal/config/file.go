@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -92,23 +91,6 @@ func (cnf *AgentCnf) ApplyFile(f *AgentFileCnf) {
 	if f.CryptoKey != "" {
 		cnf.CryptoKey = f.CryptoKey
 	}
-}
-
-// FindConfigPath ищет путь к файлу конфигурации: сначала в аргументах (-c/--config),
-// затем в переменной окружения CONFIG.
-func FindConfigPath() string {
-	args := os.Args[1:]
-	for i, arg := range args {
-		switch {
-		case (arg == "-c" || arg == "--config") && i+1 < len(args):
-			return args[i+1]
-		case strings.HasPrefix(arg, "-c="):
-			return strings.TrimPrefix(arg, "-c=")
-		case strings.HasPrefix(arg, "--config="):
-			return strings.TrimPrefix(arg, "--config=")
-		}
-	}
-	return os.Getenv("CONFIG")
 }
 
 func parseDurationSec(s string) (int, bool) {

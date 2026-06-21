@@ -20,11 +20,11 @@ func LoadPublicKey(path string) (*rsa.PublicKey, error) {
 	if block == nil {
 		return nil, errors.New("crypto.LoadPublicKey: no PEM block")
 	}
-	cert, err := x509.ParseCertificate(block.Bytes)
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("crypto.LoadPublicKey: %w", err)
 	}
-	pub, ok := cert.PublicKey.(*rsa.PublicKey)
+	pub, ok := key.(*rsa.PublicKey)
 	if !ok {
 		return nil, errors.New("crypto.LoadPublicKey: not an RSA public key")
 	}

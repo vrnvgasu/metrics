@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/spf13/pflag"
@@ -12,8 +13,11 @@ import (
 func parseFlags() *config.ServerCnf {
 	cnf := config.NewServerCnf()
 
-	if configPath := config.FindConfigPath(); configPath != "" {
-		fileCnf, err := config.LoadServerFileCnf(configPath)
+	pflag.StringVarP(&cnf.ConfigFile, "config", "c", os.Getenv("CONFIG"), "path to config file")
+	pflag.Parse()
+
+	if cnf.ConfigFile != "" {
+		fileCnf, err := config.LoadServerFileCnf(cnf.ConfigFile)
 		if err != nil {
 			log.Fatal("error loading config file: ", err)
 		}

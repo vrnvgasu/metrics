@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"io"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/vrnvgasu/metrics/internal/handler/response"
+	serviceerrors "github.com/vrnvgasu/metrics/internal/service/errors"
 	"github.com/vrnvgasu/metrics/pkg/crypto"
 )
 
@@ -25,7 +25,7 @@ func Decrypt(privateKey *rsa.PrivateKey) gin.HandlerFunc {
 
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
+			response.ResponseError(c, serviceerrors.BadRequestError())
 			return
 		}
 
