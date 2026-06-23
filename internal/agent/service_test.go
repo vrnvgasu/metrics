@@ -1,12 +1,28 @@
 package agent
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
 )
+
+func TestAgent_SetPublicKey(t *testing.T) {
+	t.Parallel()
+
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	a := NewAgent(nil, 1)
+	assert.Nil(t, a.publicKey)
+
+	a.SetPublicKey(&priv.PublicKey)
+	assert.NotNil(t, a.publicKey)
+}
 
 func TestAgent_pushMetric(t *testing.T) {
 	t.Parallel()

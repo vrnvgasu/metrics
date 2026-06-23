@@ -21,7 +21,11 @@ func newExampleRouter() *gin.Engine {
 	repo := mem.NewMemStorage()
 	s := metric.NewService(repo)
 	h := handler.NewHandler(s, nil, publisher, &config.ServerCnf{})
-	return handler.NewRouter(h)
+	r, err := handler.NewRouter(h)
+	if err != nil {
+		panic(err)
+	}
+	return r
 }
 
 // ExampleHandler_Update демонстрирует обновление метрики через URL-параметры.

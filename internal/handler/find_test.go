@@ -107,7 +107,7 @@ func TestFind(t *testing.T) {
 			request.Header.Add("Content-Type", tt.contentType)
 			w := httptest.NewRecorder()
 
-			NewRouter(h).ServeHTTP(w, request)
+			mustNewRouter(t, h).ServeHTTP(w, request)
 
 			res := w.Result()
 			body, err := io.ReadAll(res.Body)

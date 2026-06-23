@@ -2,6 +2,7 @@
 package agent
 
 import (
+	"crypto/rsa"
 	"io"
 	"net/http"
 	"sync"
@@ -20,6 +21,7 @@ type Client interface {
 type Agent struct {
 	Client    Client
 	Metrics   chan models.Metrics
+	publicKey *rsa.PublicKey
 	pollCount atomic.Int64
 	mu        sync.Mutex
 }
@@ -30,6 +32,11 @@ func NewAgent(client Client, bufSize int) *Agent {
 		Client:  client,
 		Metrics: make(chan models.Metrics, bufSize),
 	}
+}
+
+// SetPublicKey устанавливает RSA публичный ключ для шифрования запросов.
+func (a *Agent) SetPublicKey(pub *rsa.PublicKey) {
+	a.publicKey = pub
 }
 
 func (a *Agent) pushMetric(m models.Metrics) {

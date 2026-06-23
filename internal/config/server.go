@@ -9,9 +9,21 @@ type ServerCnf struct {
 	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	Key             string `env:"KEY"`
+	CryptoKey       string `env:"CRYPTO_KEY"`
+	ConfigFile      string `env:"CONFIG"`
 
 	AuditFile string `env:"AUDIT_FILE"`
 	AuditURL  string `env:"AUDIT_URL"`
+}
+
+func NewServerCnf() *ServerCnf {
+	return &ServerCnf{
+		Address:         "localhost:8080",
+		LogLevel:        "info",
+		StoreInterval:   300,
+		FileStoragePath: "store.json",
+		Restore:         true,
+	}
 }
 
 func (s *ServerCnf) String() string {

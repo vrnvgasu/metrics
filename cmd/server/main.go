@@ -42,7 +42,7 @@ func info() {
 func run() error {
 	cnf := parseFlags()
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
 	err := logger.Initialize(cnf.LogLevel)
@@ -67,27 +67,31 @@ func run() error {
 	defer publisher.Close()
 
 	h := handler.NewHandler(metricService, healthService, publisher, cnf)
-	router := handler.NewServer(handler.NewRouter(h), cnf)
+	r, err := handler.NewRouter(h)
+	if err != nil {
+		return fmt.Errorf("could not create router: %w", err)
+	}
+	server := handler.NewServer(r, cnf)
 
 	storeService, err := store.NewService(storage, metricService, *cnf)
 	if err != nil {
 		return fmt.Errorf("could not create service: %w", err)
 	}
 
-	serverErr, err := start(ctx, cnf, router, storeService)
+	serverErr, err := start(ctx, cnf, server, storeService)
 	if err != nil {
 		return err
 	}
 
-	return wait(ctx, serverErr, router, storeService)
+	return wait(ctx, serverErr, server, storeService)
 }
 
 func start(
-	ctx context.Context, cnf *config.ServerCnf, router *handler.Server, server *store.Service,
+	ctx context.Context, cnf *config.ServerCnf, server *handler.Server, storeService *store.Service,
 ) (chan error, error) {
 	serverErr := make(chan error)
 
-	if err := server.Restore(ctx); err != nil {
+	if err := storeService.Restore(ctx); err != nil {
 		return nil, fmt.Errorf("could not restore server: %w", err)
 	}
 
@@ -98,14 +102,14 @@ func start(
 		}
 	}()
 	go func() {
-		logger.Log.Infof("starting router on: %s", cnf.Address)
-		if err := router.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Log.Infof("starting server on: %s", cnf.Address)
+		if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
 	}()
 	go func() {
 		logger.Log.Infof("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
-		if err := server.StoreInterval(ctx); err != nil {
+		if err := storeService.StoreInterval(ctx); err != nil {
 			serverErr <- err
 		}
 	}()
@@ -113,23 +117,23 @@ func start(
 	return serverErr, nil
 }
 
-func wait(ctx context.Context, serverErr chan error, router *handler.Server, server *store.Service) error {
+func wait(ctx context.Context, serverErr chan error, server *handler.Server, storeService *store.Service) error {
 	select {
 	case <-ctx.Done():
-		logger.Log.Info("shutting down router")
+		logger.Log.Info("shutting down server")
 	case err := <-serverErr:
-		return fmt.Errorf("router error: %w", err)
+		return fmt.Errorf("server error: %w", err)
 	}
 
-	if err := server.Stop(); err != nil {
+	if err := storeService.Stop(); err != nil {
 		return fmt.Errorf("could not stop server: %w", err)
 	}
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
-	if err := router.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("router shutdown error: %w", err)
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("server shutdown error: %w", err)
 	}
 
 	return nil

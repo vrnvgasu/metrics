@@ -90,6 +90,16 @@ func TestUpdateJSON(t *testing.T) {
 			expectedStatus:      http.StatusNotFound,
 			expectedContentType: "text/plain",
 		},
+		{
+			name:   "unknown metric type",
+			method: http.MethodPost,
+			body: UpdateJSONRequest{
+				ID:    "x",
+				MType: "unknown",
+			},
+			expectedStatus:      http.StatusInternalServerError,
+			expectedContentType: "application/json",
+		},
 	}
 
 	for _, tt := range tests {
@@ -106,7 +116,7 @@ func TestUpdateJSON(t *testing.T) {
 			request := httptest.NewRequest(tt.method, path, bytes.NewBuffer(body))
 			w := httptest.NewRecorder()
 
-			NewRouter(h).ServeHTTP(w, request)
+			mustNewRouter(t, h).ServeHTTP(w, request)
 
 			res := w.Result()
 			res.Body.Close()
@@ -128,6 +138,54 @@ func TestUpdateJSON(t *testing.T) {
 					assert.Equal(t, *req.Value, *metric.Value)
 				}
 			}
+		})
+	}
+}
+
+func TestUpdateJSONList(t *testing.T) {
+	t.Parallel()
+
+	publisher, err := audit.NewAudit(&config.ServerCnf{})
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		body           string
+		expectedStatus int
+	}{
+		{
+			name:           "success",
+			body:           `[{"id":"Alloc","type":"gauge","value":1.5}]`,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid json",
+			body:           `not json`,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "unknown metric type",
+			body:           `[{"id":"X","type":"unknown"}]`,
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := mem.NewMemStorage()
+			s := metric.NewService(repo)
+			h := NewHandler(s, nil, publisher, &config.ServerCnf{})
+
+			req := httptest.NewRequest(http.MethodPost, "/updates", bytes.NewBufferString(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			mustNewRouter(t, h).ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedStatus, w.Code)
 		})
 	}
 }
@@ -165,7 +223,7 @@ func TestUpdateJSONGzipCompress(t *testing.T) {
 	request.Header.Set("Content-Encoding", "gzip")
 	w := httptest.NewRecorder()
 
-	NewRouter(h).ServeHTTP(w, request)
+	mustNewRouter(t, h).ServeHTTP(w, request)
 
 	res := w.Result()
 	res.Body.Close()

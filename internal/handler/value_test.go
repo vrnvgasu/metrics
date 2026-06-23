@@ -151,7 +151,7 @@ func TestValue(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			NewRouter(h).ServeHTTP(w, request)
+			mustNewRouter(t, h).ServeHTTP(w, request)
 
 			res := w.Result()
 			defer res.Body.Close()

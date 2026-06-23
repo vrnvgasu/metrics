@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/vrnvgasu/metrics/internal/agent"
+	"github.com/vrnvgasu/metrics/pkg/crypto"
 	"github.com/vrnvgasu/metrics/pkg/retry"
 )
 
@@ -39,7 +40,15 @@ func run() error {
 	bufSize := cnf.ReportInterval / cnf.PollInterval * 100
 
 	agentClient := agent.NewAgent(retry.NewClient(nil), bufSize)
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	if cnf.CryptoKey != "" {
+		pub, err := crypto.LoadPublicKey(cnf.CryptoKey)
+		if err != nil {
+			return fmt.Errorf("could not load public key: %w", err)
+		}
+		agentClient.SetPublicKey(pub)
+	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
 	errGroup, runtimeCtx := errgroup.WithContext(ctx)
