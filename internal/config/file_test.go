@@ -12,23 +12,27 @@ func TestParseDurationSec(t *testing.T) {
 	tests := []struct {
 		input   string
 		wantSec int
-		wantOk  bool
+		wantErr bool
 	}{
-		{"1s", 1, true},
-		{"5s", 5, true},
-		{"1m", 60, true},
-		{"2m30s", 150, true},
-		{"300s", 300, true},
-		{"invalid", 0, false},
-		{"300", 0, false},
-		{"", 0, false},
+		{"1s", 1, false},
+		{"5s", 5, false},
+		{"1m", 60, false},
+		{"2m30s", 150, false},
+		{"300s", 300, false},
+		{"invalid", 0, true},
+		{"300", 0, true},
+		{"", 0, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
-			got, ok := parseDurationSec(tt.input)
-			assert.Equal(t, tt.wantOk, ok)
-			assert.Equal(t, tt.wantSec, got)
+			got, err := parseDurationSec(tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantSec, got)
+			}
 		})
 	}
 }
@@ -38,9 +42,10 @@ func TestServerCnf_ApplyFile(t *testing.T) {
 	restoreTrue := true
 	restoreFalse := false
 	tests := []struct {
-		name  string
-		input ServerFileCnf
-		check func(t *testing.T, cnf *ServerCnf)
+		name    string
+		input   ServerFileCnf
+		wantErr bool
+		check   func(t *testing.T, cnf *ServerCnf)
 	}{
 		{
 			name: "all fields",
@@ -78,17 +83,24 @@ func TestServerCnf_ApplyFile(t *testing.T) {
 			check: func(t *testing.T, cnf *ServerCnf) { assert.True(t, cnf.Restore) },
 		},
 		{
-			name:  "invalid duration ignored",
-			input: ServerFileCnf{StoreInterval: "invalid"},
-			check: func(t *testing.T, cnf *ServerCnf) { assert.Equal(t, 300, cnf.StoreInterval) },
+			name:    "invalid duration returns error",
+			input:   ServerFileCnf{StoreInterval: "invalid"},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			cnf := NewServerCnf()
-			cnf.ApplyFile(&tt.input)
-			tt.check(t, cnf)
+			err := cnf.ApplyFile(&tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, cnf)
+			}
 		})
 	}
 }
@@ -96,9 +108,10 @@ func TestServerCnf_ApplyFile(t *testing.T) {
 func TestAgentCnf_ApplyFile(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name  string
-		input AgentFileCnf
-		check func(t *testing.T, cnf *AgentCnf)
+		name    string
+		input   AgentFileCnf
+		wantErr bool
+		check   func(t *testing.T, cnf *AgentCnf)
 	}{
 		{
 			name: "all fields",
@@ -123,20 +136,24 @@ func TestAgentCnf_ApplyFile(t *testing.T) {
 			},
 		},
 		{
-			name:  "invalid duration ignored",
-			input: AgentFileCnf{ReportInterval: "bad", PollInterval: "also-bad"},
-			check: func(t *testing.T, cnf *AgentCnf) {
-				assert.Equal(t, 10, cnf.ReportInterval)
-				assert.Equal(t, 2, cnf.PollInterval)
-			},
+			name:    "invalid duration returns error",
+			input:   AgentFileCnf{ReportInterval: "bad"},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			cnf := NewAgentCnf()
-			cnf.ApplyFile(&tt.input)
-			tt.check(t, cnf)
+			err := cnf.ApplyFile(&tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tt.check != nil {
+				tt.check(t, cnf)
+			}
 		})
 	}
 }
