@@ -21,7 +21,7 @@ bench:
 .PHONY: cover
 cover:
 	@echo "coverage"
-	@go test -coverprofile=coverage.out \
+	@go test -count=1 -coverprofile=coverage.out \
 		-coverpkg=$(shell go list ./... | grep -v "mocks" | paste -sd,) \
 		$(shell go list ./... | grep -v "mocks")
 	@go tool cover -func=coverage.out | grep "^total:"

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,4 +174,22 @@ func TestValue(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValue_NotFound(t *testing.T) {
+	t.Parallel()
+
+	s := metric.NewService(mem.NewMemStorage())
+	h := NewHandler(s, nil, newTestPublisher(t), &config.ServerCnf{})
+
+	// валидный JSON, но метрики нет в хранилище
+	req := httptest.NewRequest(http.MethodPost, "/value/", strings.NewReader(`{"id":"missing","type":"gauge"}`))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	mustNewRouter(t, h).ServeHTTP(w, req)
+
+	res := w.Result()
+	res.Body.Close()
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 }

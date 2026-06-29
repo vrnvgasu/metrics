@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -121,4 +122,19 @@ func TestFind(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFind_BindError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	h := NewHandler(metric.NewService(mem.NewMemStorage()), nil, newTestPublisher(t), &config.ServerCnf{})
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+
+	h.Find(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

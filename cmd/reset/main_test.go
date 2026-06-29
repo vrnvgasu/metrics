@@ -267,6 +267,18 @@ type Baz struct { Z bool }
 type MyInt int`,
 			wantLen: 0,
 		},
+		{
+			name: "func declaration ignored",
+			src: `package test
+func Foo() {}`,
+			wantLen: 0,
+		},
+		{
+			name: "const declaration ignored",
+			src: `package test
+const X = 1`,
+			wantLen: 0,
+		},
 	}
 
 	for _, tt := range tests {
@@ -337,6 +349,29 @@ type ResetableStruct struct { X int }
 
 		require.Equal(t, "r", data.Structs[0].Recv)
 	})
+
+	t.Run("embedded and unsupported fields are skipped", func(t *testing.T) {
+		t.Parallel()
+		// Embedded — поле без имени (пропускается),
+		// Ch chan int — неподдерживаемый тип (resetCode возвращает ""),
+		// X int — обычное поле.
+		src := `package test
+// generate:reset
+type Foo struct {
+	Embedded
+	Ch chan int
+	X  int
+}
+`
+		f := parseSource(t, src)
+		structs := collectStructs(f)
+		data := buildFileData("test", structs)
+
+		body := data.Structs[0].Body
+		require.Contains(t, body, "f.X = 0")
+		require.NotContains(t, body, "Embedded")
+		require.NotContains(t, body, "Ch")
+	})
 }
 
 func TestWriteGenFile(t *testing.T) {
@@ -368,4 +403,44 @@ func TestWriteGenFile(t *testing.T) {
 	require.Contains(t, src, "func (f *Foo) Reset()")
 	require.Contains(t, src, "f.X = 0")
 	require.Contains(t, src, "DO NOT EDIT")
+}
+
+func TestWriteGenFile_FormatError(t *testing.T) {
+	t.Parallel()
+
+	tmpl := template.Must(template.New("reset").Parse(genFileTemplate))
+
+	// Body с невалидным Go приведёт к ошибке format.Source.
+	data := fileData{
+		Package: "testpkg",
+		Structs: []structData{{Name: "Foo", Recv: "f", Body: "this is not valid go @@@\n"}},
+	}
+
+	err := writeGenFile(tmpl, t.TempDir(), data)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "format")
+}
+
+func TestMainRun(t *testing.T) {
+	dir := t.TempDir()
+	src := `package sample
+// generate:reset
+type Sample struct {
+	X    int
+	Name string
+}
+`
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "sample.go"), []byte(src), 0644))
+
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+	os.Args = []string{"reset", dir}
+
+	main()
+
+	out, err := os.ReadFile(filepath.Join(dir, "reset.gen.go"))
+	require.NoError(t, err)
+	require.Contains(t, string(out), "func (s *Sample) Reset()")
+	require.Contains(t, string(out), "s.X = 0")
+	require.Contains(t, string(out), `s.Name = ""`)
 }
