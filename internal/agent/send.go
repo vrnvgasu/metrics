@@ -23,6 +23,7 @@ const (
 	batchCount      = 100
 	hashHeader      = "HashSHA256"
 	encryptedHeader = "X-Encrypted"
+	realIPHeader    = "X-Real-IP"
 )
 
 func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
@@ -110,6 +111,9 @@ func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
 	req.Header.Set("Content-Encoding", "gzip")
 	if a.publicKey != nil {
 		req.Header.Set(encryptedHeader, "true")
+	}
+	if a.realIP != "" {
+		req.Header.Set(realIPHeader, a.realIP)
 	}
 
 	resp, err := a.Client.Do(req)

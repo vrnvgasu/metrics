@@ -49,6 +49,7 @@ func parseFlags() *config.ServerCnf {
 	pflag.StringVar(&cnf.AuditFile, "audit-file", cnf.AuditFile, "path to audit file")
 	pflag.StringVar(&cnf.AuditURL, "audit-url", cnf.AuditURL, "audit server URL")
 	pflag.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to private key file for decryption")
+	pflag.StringVarP(&cnf.TrustedSubnet, "trusted-subnet", "t", cnf.TrustedSubnet, "trusted subnet in CIDR notation")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

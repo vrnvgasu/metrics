@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,9 +28,18 @@ func NewRouter(handler *Handler) (*gin.Engine, error) {
 		}
 	}
 
+	var trustedSubnet *net.IPNet
+	if handler.cfg.TrustedSubnet != "" {
+		var err error
+		if _, trustedSubnet, err = net.ParseCIDR(handler.cfg.TrustedSubnet); err != nil {
+			return nil, fmt.Errorf("handler.NewRouter ParseCIDR: %w", err)
+		}
+	}
+
 	r := gin.New()
 
 	r.Use(middleware.Logger())
+	r.Use(middleware.TrustedSubnet(trustedSubnet))
 	r.Use(middleware.Decrypt(privateKey))
 	r.Use(middleware.Gzip())
 	r.Use(gin.Recovery())

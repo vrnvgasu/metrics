@@ -22,6 +22,7 @@ type Agent struct {
 	Client    Client
 	Metrics   chan models.Metrics
 	publicKey *rsa.PublicKey
+	realIP    string
 	pollCount atomic.Int64
 	mu        sync.Mutex
 }
@@ -37,6 +38,11 @@ func NewAgent(client Client, bufSize int) *Agent {
 // SetPublicKey устанавливает RSA публичный ключ для шифрования запросов.
 func (a *Agent) SetPublicKey(pub *rsa.PublicKey) {
 	a.publicKey = pub
+}
+
+// SetRealIP устанавливает IP-адрес хоста агента для заголовка X-Real-IP.
+func (a *Agent) SetRealIP(ip string) {
+	a.realIP = ip
 }
 
 func (a *Agent) pushMetric(m models.Metrics) {

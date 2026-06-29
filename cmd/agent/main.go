@@ -48,6 +48,12 @@ func run() error {
 		}
 		agentClient.SetPublicKey(pub)
 	}
+
+	ip, err := agent.OutboundIP(cnf.Address)
+	if err != nil {
+		return fmt.Errorf("could not determine outbound IP: %w", err)
+	}
+	agentClient.SetRealIP(ip.String())
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
