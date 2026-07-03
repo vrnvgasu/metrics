@@ -3,6 +3,7 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
@@ -101,7 +102,7 @@ func TestAgent_sendBatch(t *testing.T) {
 			}
 
 			cnf := &config.AgentCnf{Address: "localhost:8080", Key: tt.key}
-			require.NoError(t, a.sendBatch(metrics, cnf))
+			require.NoError(t, a.sendBatch(context.Background(), metrics, cnf))
 
 			assert.Equal(t, "http://localhost:8080/updates", gotReq.URL.String())
 			assert.Equal(t, "application/json", gotReq.Header.Get("Content-Type"))
@@ -143,6 +144,7 @@ func TestAgent_sendBatch_ClientError(t *testing.T) {
 
 	a := NewAgent(client, 1)
 	err := a.sendBatch(
+		context.Background(),
 		[]*models.Metrics{{ID: "Alloc", MType: models.Gauge, Value: helper.NewRefFloat64(1.0)}},
 		&config.AgentCnf{Address: "localhost:8080"},
 	)

@@ -15,6 +15,7 @@ type ServerFileCnf struct {
 	DatabaseDSN     string `json:"database_dsn"`
 	CryptoKey       string `json:"crypto_key"`
 	TrustedSubnet   string `json:"trusted_subnet"`
+	GRPCAddress     string `json:"grpc_address"`
 }
 
 type AgentFileCnf struct {
@@ -22,6 +23,7 @@ type AgentFileCnf struct {
 	ReportInterval string `json:"report_interval"`
 	PollInterval   string `json:"poll_interval"`
 	CryptoKey      string `json:"crypto_key"`
+	GRPCAddress    string `json:"grpc_address"`
 }
 
 func LoadServerFileCnf(path string) (*ServerFileCnf, error) {
@@ -78,6 +80,9 @@ func (cnf *ServerCnf) ApplyFile(f *ServerFileCnf) error {
 	if f.TrustedSubnet != "" {
 		cnf.TrustedSubnet = f.TrustedSubnet
 	}
+	if f.GRPCAddress != "" {
+		cnf.GRPCAddress = f.GRPCAddress
+	}
 
 	return nil
 }
@@ -102,6 +107,9 @@ func (cnf *AgentCnf) ApplyFile(f *AgentFileCnf) error {
 	}
 	if f.CryptoKey != "" {
 		cnf.CryptoKey = f.CryptoKey
+	}
+	if f.GRPCAddress != "" {
+		cnf.GRPCAddress = f.GRPCAddress
 	}
 
 	return nil

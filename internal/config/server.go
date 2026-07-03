@@ -11,6 +11,7 @@ type ServerCnf struct {
 	Key             string `env:"KEY"`
 	CryptoKey       string `env:"CRYPTO_KEY"`
 	TrustedSubnet   string `env:"TRUSTED_SUBNET"`
+	GRPCAddress     string `env:"GRPC_ADDRESS"`
 	ConfigFile      string `env:"CONFIG"`
 
 	AuditFile string `env:"AUDIT_FILE"`

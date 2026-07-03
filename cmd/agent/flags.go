@@ -45,6 +45,7 @@ func parseFlags() *config.AgentCnf {
 	pflag.StringVarP(&cnf.Key, "key", "k", cnf.Key, "hash key")
 	pflag.IntVarP(&cnf.RateLimit, "rateLimit", "l", cnf.RateLimit, "rate limit")
 	pflag.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to public key file for encryption")
+	pflag.StringVarP(&cnf.GRPCAddress, "grpc-address", "g", cnf.GRPCAddress, "address:port of gRPC server (if set, metrics are sent via gRPC)")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

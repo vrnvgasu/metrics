@@ -22,13 +22,20 @@ bench:
 cover:
 	@echo "coverage"
 	@go test -count=1 -coverprofile=coverage.out \
-		-coverpkg=$(shell go list ./... | grep -v "mocks" | paste -sd,) \
+		-coverpkg=$(shell go list ./... | grep -v "mocks" | grep -v "proto" | paste -sd,) \
 		$(shell go list ./... | grep -v "mocks")
 	@go tool cover -func=coverage.out | grep "^total:"
 
 .PHONY: generate
 generate:
 	@echo "generate"
+	@protoc \
+       --go_out=. \
+       --go_opt=module=github.com/vrnvgasu/metrics \
+       --go-grpc_out=. \
+       --go-grpc_opt=module=github.com/vrnvgasu/metrics \
+       --go_opt=default_api_level=API_OPAQUE \
+       proto/metrics.proto
 	@go generate ./...
 
 .PHONY: infra-up

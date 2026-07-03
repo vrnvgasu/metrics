@@ -50,6 +50,7 @@ func parseFlags() *config.ServerCnf {
 	pflag.StringVar(&cnf.AuditURL, "audit-url", cnf.AuditURL, "audit server URL")
 	pflag.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to private key file for decryption")
 	pflag.StringVarP(&cnf.TrustedSubnet, "trusted-subnet", "t", cnf.TrustedSubnet, "trusted subnet in CIDR notation")
+	pflag.StringVarP(&cnf.GRPCAddress, "grpc-address", "g", cnf.GRPCAddress, "address:port for gRPC server (empty disables gRPC)")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

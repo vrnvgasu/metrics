@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
+	pb "github.com/vrnvgasu/metrics/internal/proto"
 )
 
 // Client — интерфейс HTTP-клиента агента.
@@ -21,12 +22,13 @@ type Client interface {
 
 // Agent собирает и отправляет метрики на сервер.
 type Agent struct {
-	Client    Client
-	Metrics   chan models.Metrics
-	publicKey *rsa.PublicKey
-	realIP    string
-	pollCount atomic.Int64
-	mu        sync.Mutex
+	Client     Client
+	Metrics    chan models.Metrics
+	publicKey  *rsa.PublicKey
+	realIP     string
+	grpcClient pb.MetricsClient
+	pollCount  atomic.Int64
+	mu         sync.Mutex
 }
 
 // NewAgent создает агента с буфером канала метрик размером bufSize.
@@ -45,6 +47,11 @@ func (a *Agent) SetPublicKey(pub *rsa.PublicKey) {
 // SetRealIP устанавливает IP-адрес хоста агента для заголовка X-Real-IP.
 func (a *Agent) SetRealIP(ip string) {
 	a.realIP = ip
+}
+
+// SetGRPCClient включает отправку метрик через gRPC-клиент вместо HTTP.
+func (a *Agent) SetGRPCClient(client pb.MetricsClient) {
+	a.grpcClient = client
 }
 
 func (a *Agent) pushMetric(m models.Metrics) {
