@@ -24,6 +24,16 @@ func TestAgent_SetPublicKey(t *testing.T) {
 	assert.NotNil(t, a.publicKey)
 }
 
+func TestAgent_SetRealIP(t *testing.T) {
+	t.Parallel()
+
+	a := NewAgent(nil, 1)
+	assert.Empty(t, a.realIP)
+
+	a.SetRealIP("192.168.0.1")
+	assert.Equal(t, "192.168.0.1", a.realIP)
+}
+
 func TestAgent_pushMetric(t *testing.T) {
 	t.Parallel()
 

@@ -13,6 +13,7 @@ type AgentCnf struct {
 	Key            string `env:"KEY"`
 	RateLimit      int    `env:"RATE_LIMIT"`
 	CryptoKey      string `env:"CRYPTO_KEY"`
+	GRPCAddress    string `env:"GRPC_ADDRESS"`
 	ConfigFile     string `env:"CONFIG"`
 }
 

@@ -9,6 +9,8 @@ import (
 )
 
 // MetricService — интерфейс сервиса метрик.
+//
+//go:generate mockgen -destination=./mocks/metric.go . MetricService
 type MetricService interface {
 	// CreateOrUpdate создает или обновляет список метрик.
 	CreateOrUpdate(context.Context, models.MetricsList) error
@@ -20,7 +22,7 @@ type MetricService interface {
 
 // HealthService — интерфейс проверки доступности хранилища.
 //
-//go:generate mockgen -destination=./mocks/mock.go . HealthService
+//go:generate mockgen -destination=./mocks/health.go . HealthService
 type HealthService interface {
 	// CheckPing проверяет соединение с хранилищем.
 	CheckPing(ctx context.Context) error

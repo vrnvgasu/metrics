@@ -21,3 +21,12 @@ func TestNewServer(t *testing.T) {
 	require.NotNil(t, s)
 	assert.Equal(t, "localhost:9999", s.Addr)
 }
+
+func TestServer_Run_Error(t *testing.T) {
+	t.Parallel()
+
+	// невалидный адрес → ListenAndServe вернет ошибку сразу
+	srv := NewServer(gin.New(), &config.ServerCnf{Address: "localhost:-1"})
+	err := srv.Run()
+	require.Error(t, err)
+}

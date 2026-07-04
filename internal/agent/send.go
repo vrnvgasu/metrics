@@ -23,6 +23,7 @@ const (
 	batchCount      = 100
 	hashHeader      = "HashSHA256"
 	encryptedHeader = "X-Encrypted"
+	realIPHeader    = "X-Real-IP"
 )
 
 func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
@@ -50,7 +51,7 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 					continue
 				}
 
-				if err := a.sendBatch(batch, cnf); err != nil {
+				if err := a.sendBatch(ctx, batch, cnf); err != nil {
 					return fmt.Errorf("agent.SendMetrics SendBatch: %w", err)
 				}
 
@@ -63,7 +64,7 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 			}
 
 			if len(batch) > 0 {
-				return a.sendBatch(batch, cnf)
+				return a.sendBatch(ctx, batch, cnf)
 			}
 
 			return nil
@@ -77,7 +78,11 @@ func (a *Agent) SendMetrics(ctx context.Context, cnf *config.AgentCnf) error {
 	return nil
 }
 
-func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
+func (a *Agent) sendBatch(ctx context.Context, m []*models.Metrics, cnf *config.AgentCnf) error {
+	if a.grpcClient != nil {
+		return a.sendBatchGRPC(ctx, m)
+	}
+
 	body, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("agent.SendBatch Marshal: %w", err)
@@ -110,6 +115,9 @@ func (a *Agent) sendBatch(m []*models.Metrics, cnf *config.AgentCnf) error {
 	req.Header.Set("Content-Encoding", "gzip")
 	if a.publicKey != nil {
 		req.Header.Set(encryptedHeader, "true")
+	}
+	if a.realIP != "" {
+		req.Header.Set(realIPHeader, a.realIP)
 	}
 
 	resp, err := a.Client.Do(req)

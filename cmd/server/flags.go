@@ -10,20 +10,35 @@ import (
 	"github.com/vrnvgasu/metrics/internal/config"
 )
 
+type serverConfigValue struct {
+	cnf *config.ServerCnf
+}
+
+func (v *serverConfigValue) String() string { return v.cnf.ConfigFile }
+func (v *serverConfigValue) Type() string   { return "string" }
+func (v *serverConfigValue) Set(path string) error {
+	fileCnf, err := config.LoadServerFileCnf(path)
+	if err != nil {
+		return err
+	}
+	if err = v.cnf.ApplyFile(fileCnf); err != nil {
+		return err
+	}
+	v.cnf.ConfigFile = path
+	return nil
+}
+
 func parseFlags() *config.ServerCnf {
 	cnf := config.NewServerCnf()
 
-	pflag.StringVarP(&cnf.ConfigFile, "config", "c", os.Getenv("CONFIG"), "path to config file")
-	pflag.Parse()
-
-	if cnf.ConfigFile != "" {
-		fileCnf, err := config.LoadServerFileCnf(cnf.ConfigFile)
-		if err != nil {
+	cfgVal := &serverConfigValue{cnf: cnf}
+	if path := os.Getenv("CONFIG"); path != "" {
+		if err := cfgVal.Set(path); err != nil {
 			log.Fatal("error loading config file: ", err)
 		}
-		cnf.ApplyFile(fileCnf)
 	}
 
+	pflag.VarP(cfgVal, "config", "c", "path to config file")
 	pflag.StringVarP(&cnf.Address, "address", "a", cnf.Address, "address:port to listen on")
 	pflag.StringVarP(&cnf.LogLevel, "loglevel", "l", cnf.LogLevel, "log level")
 	pflag.IntVarP(&cnf.StoreInterval, "storeInterval", "i", cnf.StoreInterval, "store interval in seconds")
@@ -34,6 +49,8 @@ func parseFlags() *config.ServerCnf {
 	pflag.StringVar(&cnf.AuditFile, "audit-file", cnf.AuditFile, "path to audit file")
 	pflag.StringVar(&cnf.AuditURL, "audit-url", cnf.AuditURL, "audit server URL")
 	pflag.StringVar(&cnf.CryptoKey, "crypto-key", cnf.CryptoKey, "path to private key file for decryption")
+	pflag.StringVarP(&cnf.TrustedSubnet, "trusted-subnet", "t", cnf.TrustedSubnet, "trusted subnet in CIDR notation")
+	pflag.StringVarP(&cnf.GRPCAddress, "grpc-address", "g", cnf.GRPCAddress, "address:port for gRPC server (empty disables gRPC)")
 	pflag.Parse()
 
 	if err := env.Parse(cnf); err != nil {

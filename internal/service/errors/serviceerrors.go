@@ -14,6 +14,7 @@ const (
 	ErrInternal                ServiceErrorType = "internal server error"
 	ErrUnprocessableEntity     ServiceErrorType = "unprocessable entity"
 	ErrBadRequest              ServiceErrorType = "bad request"
+	ErrForbidden               ServiceErrorType = "forbidden"
 	ErrServiceUnavailableError ServiceErrorType = "service unavailable"
 )
 
@@ -49,6 +50,15 @@ func UnprocessableEntity() error {
 		Type:     ErrUnprocessableEntity,
 		Message:  http.StatusText(http.StatusUnprocessableEntity),
 		HTTPCode: http.StatusUnprocessableEntity,
+	}
+}
+
+// ForbiddenError возвращает ошибку 403.
+func ForbiddenError() error {
+	return &ServiceError{
+		Type:     ErrForbidden,
+		Message:  http.StatusText(http.StatusForbidden),
+		HTTPCode: http.StatusForbidden,
 	}
 }
 

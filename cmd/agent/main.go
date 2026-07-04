@@ -9,8 +9,11 @@ import (
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/vrnvgasu/metrics/internal/agent"
+	pb "github.com/vrnvgasu/metrics/internal/proto"
 	"github.com/vrnvgasu/metrics/pkg/crypto"
 	"github.com/vrnvgasu/metrics/pkg/retry"
 )
@@ -48,6 +51,26 @@ func run() error {
 		}
 		agentClient.SetPublicKey(pub)
 	}
+
+	outboundTarget := cnf.Address
+	if cnf.GRPCAddress != "" {
+		outboundTarget = cnf.GRPCAddress
+	}
+	ip, err := agent.OutboundIP(outboundTarget)
+	if err != nil {
+		return fmt.Errorf("could not determine outbound IP: %w", err)
+	}
+	agentClient.SetRealIP(ip.String())
+
+	if cnf.GRPCAddress != "" {
+		conn, err := grpc.NewClient(cnf.GRPCAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return fmt.Errorf("could not connect to gRPC server: %w", err)
+		}
+		defer conn.Close()
+		agentClient.SetGRPCClient(pb.NewMetricsClient(conn))
+	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 

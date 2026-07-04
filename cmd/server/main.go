@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/vrnvgasu/metrics/internal/config"
+	grpcserver "github.com/vrnvgasu/metrics/internal/grpc"
 	"github.com/vrnvgasu/metrics/internal/handler"
 	"github.com/vrnvgasu/metrics/internal/logger"
 	"github.com/vrnvgasu/metrics/internal/service/audit"
@@ -78,18 +79,30 @@ func run() error {
 		return fmt.Errorf("could not create service: %w", err)
 	}
 
-	serverErr, err := start(ctx, cnf, server, storeService)
+	var grpcSrv *grpcserver.Server
+	if cnf.GRPCAddress != "" {
+		grpcSrv, err = grpcserver.NewServer(metricService, publisher, cnf)
+		if err != nil {
+			return fmt.Errorf("could not create gRPC server: %w", err)
+		}
+	}
+
+	serverErr, err := start(ctx, cnf, server, grpcSrv, storeService)
 	if err != nil {
 		return err
 	}
 
-	return wait(ctx, serverErr, server, storeService)
+	return wait(ctx, serverErr, server, grpcSrv, storeService)
 }
 
 func start(
-	ctx context.Context, cnf *config.ServerCnf, server *handler.Server, storeService *store.Service,
+	ctx context.Context,
+	cnf *config.ServerCnf,
+	server *handler.Server,
+	grpcSrv *grpcserver.Server,
+	storeService *store.Service,
 ) (chan error, error) {
-	serverErr := make(chan error)
+	serverErr := make(chan error, 3)
 
 	if err := storeService.Restore(ctx); err != nil {
 		return nil, fmt.Errorf("could not restore server: %w", err)
@@ -107,6 +120,14 @@ func start(
 			serverErr <- err
 		}
 	}()
+	if grpcSrv != nil {
+		go func() {
+			logger.Log.Infof("starting gRPC server on: %s", cnf.GRPCAddress)
+			if err := grpcSrv.Run(); err != nil {
+				serverErr <- err
+			}
+		}()
+	}
 	go func() {
 		logger.Log.Infof("starting store data with interval: %d to file: %s", cnf.StoreInterval, cnf.FileStoragePath)
 		if err := storeService.StoreInterval(ctx); err != nil {
@@ -117,12 +138,22 @@ func start(
 	return serverErr, nil
 }
 
-func wait(ctx context.Context, serverErr chan error, server *handler.Server, storeService *store.Service) error {
+func wait(
+	ctx context.Context,
+	serverErr chan error,
+	server *handler.Server,
+	grpcSrv *grpcserver.Server,
+	storeService *store.Service,
+) error {
 	select {
 	case <-ctx.Done():
 		logger.Log.Info("shutting down server")
 	case err := <-serverErr:
 		return fmt.Errorf("server error: %w", err)
+	}
+
+	if grpcSrv != nil {
+		grpcSrv.Stop()
 	}
 
 	if err := storeService.Stop(); err != nil {

@@ -14,6 +14,8 @@ type ServerFileCnf struct {
 	FileStoragePath string `json:"store_file"`
 	DatabaseDSN     string `json:"database_dsn"`
 	CryptoKey       string `json:"crypto_key"`
+	TrustedSubnet   string `json:"trusted_subnet"`
+	GRPCAddress     string `json:"grpc_address"`
 }
 
 type AgentFileCnf struct {
@@ -21,6 +23,7 @@ type AgentFileCnf struct {
 	ReportInterval string `json:"report_interval"`
 	PollInterval   string `json:"poll_interval"`
 	CryptoKey      string `json:"crypto_key"`
+	GRPCAddress    string `json:"grpc_address"`
 }
 
 func LoadServerFileCnf(path string) (*ServerFileCnf, error) {
@@ -51,7 +54,7 @@ func LoadAgentFileCnf(path string) (*AgentFileCnf, error) {
 	return cnf, nil
 }
 
-func (cnf *ServerCnf) ApplyFile(f *ServerFileCnf) {
+func (cnf *ServerCnf) ApplyFile(f *ServerFileCnf) error {
 	if f.Address != "" {
 		cnf.Address = f.Address
 	}
@@ -59,9 +62,11 @@ func (cnf *ServerCnf) ApplyFile(f *ServerFileCnf) {
 		cnf.Restore = *f.Restore
 	}
 	if f.StoreInterval != "" {
-		if secs, ok := parseDurationSec(f.StoreInterval); ok {
-			cnf.StoreInterval = secs
+		secs, err := parseDurationSec(f.StoreInterval)
+		if err != nil {
+			return fmt.Errorf("store_interval: %w", err)
 		}
+		cnf.StoreInterval = secs
 	}
 	if f.FileStoragePath != "" {
 		cnf.FileStoragePath = f.FileStoragePath
@@ -72,32 +77,49 @@ func (cnf *ServerCnf) ApplyFile(f *ServerFileCnf) {
 	if f.CryptoKey != "" {
 		cnf.CryptoKey = f.CryptoKey
 	}
+	if f.TrustedSubnet != "" {
+		cnf.TrustedSubnet = f.TrustedSubnet
+	}
+	if f.GRPCAddress != "" {
+		cnf.GRPCAddress = f.GRPCAddress
+	}
+
+	return nil
 }
 
-func (cnf *AgentCnf) ApplyFile(f *AgentFileCnf) {
+func (cnf *AgentCnf) ApplyFile(f *AgentFileCnf) error {
 	if f.Address != "" {
 		cnf.Address = f.Address
 	}
 	if f.ReportInterval != "" {
-		if secs, ok := parseDurationSec(f.ReportInterval); ok {
-			cnf.ReportInterval = secs
+		secs, err := parseDurationSec(f.ReportInterval)
+		if err != nil {
+			return fmt.Errorf("report_interval: %w", err)
 		}
+		cnf.ReportInterval = secs
 	}
 	if f.PollInterval != "" {
-		if secs, ok := parseDurationSec(f.PollInterval); ok {
-			cnf.PollInterval = secs
+		secs, err := parseDurationSec(f.PollInterval)
+		if err != nil {
+			return fmt.Errorf("poll_interval: %w", err)
 		}
+		cnf.PollInterval = secs
 	}
 	if f.CryptoKey != "" {
 		cnf.CryptoKey = f.CryptoKey
 	}
-}
-
-func parseDurationSec(s string) (int, bool) {
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		return 0, false
+	if f.GRPCAddress != "" {
+		cnf.GRPCAddress = f.GRPCAddress
 	}
 
-	return int(d.Seconds()), true
+	return nil
+}
+
+func parseDurationSec(s string) (int, error) {
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return 0, fmt.Errorf("invalid duration %q: %w", s, err)
+	}
+
+	return int(d.Seconds()), nil
 }
