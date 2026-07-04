@@ -102,7 +102,7 @@ func start(
 	grpcSrv *grpcserver.Server,
 	storeService *store.Service,
 ) (chan error, error) {
-	serverErr := make(chan error)
+	serverErr := make(chan error, 3)
 
 	if err := storeService.Restore(ctx); err != nil {
 		return nil, fmt.Errorf("could not restore server: %w", err)

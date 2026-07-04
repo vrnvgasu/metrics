@@ -52,7 +52,11 @@ func run() error {
 		agentClient.SetPublicKey(pub)
 	}
 
-	ip, err := agent.OutboundIP(cnf.Address)
+	outboundTarget := cnf.Address
+	if cnf.GRPCAddress != "" {
+		outboundTarget = cnf.GRPCAddress
+	}
+	ip, err := agent.OutboundIP(outboundTarget)
 	if err != nil {
 		return fmt.Errorf("could not determine outbound IP: %w", err)
 	}

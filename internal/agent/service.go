@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"io"
 	"net/http"
-	"sync"
 	"sync/atomic"
 
 	models "github.com/vrnvgasu/metrics/internal/model"
@@ -28,7 +27,6 @@ type Agent struct {
 	realIP     string
 	grpcClient pb.MetricsClient
 	pollCount  atomic.Int64
-	mu         sync.Mutex
 }
 
 // NewAgent создает агента с буфером канала метрик размером bufSize.
